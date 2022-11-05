@@ -1,5 +1,6 @@
 /.vs 
-/x64
+/PerfectShape_Client/x64
+/PerfectShape_Server/x64
 *.exe 
 *.ilk 
 *.pdb 
