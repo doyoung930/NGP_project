@@ -51,8 +51,8 @@ private:
 	HANDLE hThread;
 
 	// 이벤트 핸들
-	HANDLE	_hSendEvent;
-	HANDLE	_hCalculateEvent;
+	static HANDLE	_hSendEvent;
+	static HANDLE	_hCalculateEvent;
 
 
 public:
@@ -64,6 +64,7 @@ public:
 	
 	void send_add_packet();
 	DWORD WINAPI ProcessClient(LPVOID arg);
+	static DWORD WINAPI SendAll(LPVOID msg);
 
 public:
 	void err_display(const char* msg)
