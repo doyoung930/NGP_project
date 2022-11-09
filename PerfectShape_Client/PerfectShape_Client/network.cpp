@@ -70,7 +70,7 @@ DWORD WINAPI do_recv()
         }
         char type = *(ptr + 1);
 
-        switch (type) {
+       /* switch (type) {
         case SC_LOGININFO:
             SC_LOGININFO_PACKET* packet = (SC_LOGININFO_PACKET*)ptr;
             printf("%c", packet->type);
@@ -107,6 +107,6 @@ DWORD WINAPI do_recv()
         case SC_PLAYERHIT:
             SC_PLAYERHIT_PACKET* packet = (SC_PLAYERHIT_PACKET*)ptr;
             break;
-        };
+        };*/
     }
 }
