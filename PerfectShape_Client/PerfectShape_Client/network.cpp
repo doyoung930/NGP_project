@@ -70,43 +70,43 @@ DWORD WINAPI do_recv()
         }
         char type = *(ptr + 1);
 
-       /* switch (type) {
-        case SC_LOGININFO:
-            SC_LOGININFO_PACKET* packet = (SC_LOGININFO_PACKET*)ptr;
-            printf("%c", packet->type);
-            break;
-        case SC_ADD_PLAYER:
-            SC_ADD_PLAYER_PACKET* packet = (SC_ADD_PLAYER_PACKET*)ptr;
-            printf("%c", packet->type);
-            break;
-        case SC_START:
-            SC_START_PACKET* packet = (SC_START_PACKET*)ptr;
-            printf("%c", packet->type);
-            break;
-        case SC_REMOVE_PLAYER:
-            SC_REMOVE_PLAYER_PACKET* packet = (SC_REMOVE_PLAYER_PACKET*)ptr;
-            break;
-        case SC_MOVE_PLAYER:
-            SC_MOVE_PLAYER_PACKET* packet = (SC_MOVE_PLAYER_PACKET*)ptr;
-            break;
-        case SC_ENEMY:
-            SC_ENEMY_PACKET* packet = (SC_ENEMY_PACKET*)ptr;
-            break;
-        case SC_ENERMYHIT:
-            SC_ENERMYHIT_PACKET* packet = (SC_ENERMYHIT_PACKET*)ptr;
-            break;
-        case SC_BULLET:
-            SC_BULLET_PACKET* packet = (SC_BULLET_PACKET*)ptr;
-            break;
-        case SC_BULLETHIT:
-            SC_BULLETHIT_PACKET* packet = (SC_BULLETHIT_PACKET*)ptr;
-            break;
-        case SC_STAGE:
-            SC_STAGE_PACKET* packet = (SC_STAGE_PACKET*)ptr;
-            break;
-        case SC_PLAYERHIT:
-            SC_PLAYERHIT_PACKET* packet = (SC_PLAYERHIT_PACKET*)ptr;
-            break;
-        };*/
+        //switch (type) {
+        //case SC_LOGININFO:
+        //    SC_LOGININFO_PACKET* packet = reinterpret_cast<SC_LOGININFO_PACKET*>(ptr);
+        //    printf("%c", packet->type);
+        //    break;
+        //case SC_ADD_PLAYER:
+        //    SC_ADD_PLAYER_PACKET* packet = reinterpret_cast<SC_ADD_PLAYER_PACKET*>(ptr);
+        //    printf("%c", packet->type);
+        //    break;
+        //case SC_START:
+        //    SC_START_PACKET* packet = reinterpret_cast<SC_START_PACKET*>(ptr);
+        //    printf("%c", packet->type);
+        //    break;
+        //case SC_REMOVE_PLAYER:
+        //    SC_REMOVE_PLAYER_PACKET* packet = reinterpret_cast<SC_REMOVE_PLAYER_PACKET*>(ptr);
+        //    break;
+        //case SC_MOVE_PLAYER:
+        //    SC_MOVE_PLAYER_PACKET* packet = reinterpret_cast<SC_MOVE_PLAYER_PACKET*>(ptr);
+        //    break;
+        //case SC_ENEMY:
+        //    SC_ENEMY_PACKET* packet = reinterpret_cast<SC_ENEMY_PACKET*>(ptr);
+        //    break;
+        //case SC_ENERMYHIT:
+        //    SC_ENERMYHIT_PACKET* packet = reinterpret_cast<SC_ENERMYHIT_PACKET*>(ptr);
+        //    break;
+        //case SC_BULLET:
+        //    SC_BULLET_PACKET* packet = reinterpret_cast<SC_BULLET_PACKET*>(ptr);
+        //    break;
+        //case SC_BULLETHIT:
+        //    SC_BULLETHIT_PACKET* packet = reinterpret_cast<SC_BULLETHIT_PACKET*>(ptr);
+        //    break;
+        //case SC_STAGE:
+        //    SC_STAGE_PACKET* packet = reinterpret_cast<SC_STAGE_PACKET*>(ptr);
+        //    break;
+        //case SC_PLAYERHIT:
+        //    SC_PLAYERHIT_PACKET* packet = reinterpret_cast<SC_PLAYERHIT_PACKET*>(ptr);
+        //    break;
+        //};
     }
 }
