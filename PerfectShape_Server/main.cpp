@@ -46,7 +46,8 @@ DWORD WINAPI ProcessClient(LPVOID arg);		// 클라 쓰레드
 DWORD WINAPI SendAll(LPVOID msg);			// Send 쓰레드
 void send_login_packet(SOCKET* , int);	// 클라이언트가 접속하면 접속확인과 id를 보내는 함수
 void send_add_packet(SOCKET* , int);
-
+void send_remove_packet(SOCKET*, int);
+void gameStart();
 unordered_map<int, Player>clients;
 
 //--------
@@ -54,45 +55,45 @@ int main()
 //--------
 {
 
-	int _id;
+	int _id = 0;
 
 	// s소켓 연결
-	WSADATA _WsaData;
-	SOCKET _s_socket;
-	SOCKADDR_IN _server_addr;
-	INT _addr_size;
+	WSADATA WSAData;
+	SOCKET s_socket;
+	SOCKADDR_IN server_addr;
+	INT addr_size;
 
-	SOCKET _c_socket;
-	WSABUF _rWsaBuf;
-	WSABUF _sWsaBuf;
-	bool _shutdown = false;
-
-
+	SOCKET c_socket;
+	WSABUF rWsaBuf;
+	WSABUF sWsaBuf;
+	bool shutdown = false;
 
 
-	ZeroMemory(&_server_addr, sizeof(_server_addr));
-	_server_addr.sin_family = AF_INET;
-	_server_addr.sin_port = htons(PORT_NUM);
-	_server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-	if (WSAStartup(MAKEWORD(2, 2), &_WsaData) != 0)
+
+	ZeroMemory(&server_addr, sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(PORT_NUM);
+	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+	if (WSAStartup(MAKEWORD(2, 2), &WSAData) != 0)
 		return false;
-	_s_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
-	ret = bind(_s_socket, reinterpret_cast<sockaddr*>(&_server_addr), sizeof(_server_addr));
+	s_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
+	ret = bind(s_socket, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr));
 	if (ret == SOCKET_ERROR)
 	{
 		err_display("bind()");
 		return false;
 	}
 
-	ret = listen(_s_socket, SOMAXCONN);
+	ret = listen(s_socket, SOMAXCONN);
 	if (ret == SOCKET_ERROR)
 	{
 		err_display("listen()");
 		return false;
 	}
 
-	_addr_size = sizeof(_server_addr);
+	addr_size = sizeof(server_addr);
 
 	// 이벤트 사용 준비
 	_hSendEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
@@ -104,7 +105,7 @@ int main()
 	// 3명 접속 확인
 	while (thread_count < 3)
 	{
-		SOCKET c_socket = accept(_s_socket, reinterpret_cast<sockaddr*>(&_server_addr), &_addr_size);
+		SOCKET c_socket = accept(s_socket, reinterpret_cast<sockaddr*>(&server_addr), &addr_size);
 		if (c_socket == INVALID_SOCKET) {
 			err_display("accept()");
 		}
@@ -116,17 +117,31 @@ int main()
 		Player* player = new Player(c_socket, _id);
 
 		// 쓰레드 만들면 주석 해제
-		//hThread = CreateThread(NULL, 0,  ProcessClient, (LPVOID)player, 0, NULL);
+		hThread = CreateThread(NULL, 0,  ProcessClient, (LPVOID)player, 0, NULL);
 		if (hThread == NULL) { closesocket(player->_c_socket); }
 		else { CloseHandle(hThread); }
 		thread_count++;
 	}
 
 	// 주쓰레드 생성
-
+	
+	
+	// 게임 시작 초기화 함수
+	gameStart();
+	
 	// Send All 쓰레드 생성
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SendAll, 0, 0, NULL);
+	if (hThread == NULL) { cout << "쓰레드 생성 에러" << endl; }
+	
+	// SetEvent
+	SetEvent(_hCalculateEvent);
 
+	// 메인 루프
+	while (true) {
+		
+	}
+	
+	closesocket(c_socket);
 	WSACleanup();
 }
 
@@ -170,6 +185,16 @@ void send_add_packet(SOCKET* c_socket, int c_id)
 	SC_ADD_PLAYER_PACKET p;
 	p.size = sizeof(p);
 	p.type = SC_ADD_PLAYER;
+	p.id = c_id;
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
+// 죽은 플레이어 삭제함수
+void send_remove_packet(SOCKET* c_socket, int c_id) 
+{
+	SC_REMOVE_PLAYER_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_REMOVE_PLAYER;
 	p.id = c_id;
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
