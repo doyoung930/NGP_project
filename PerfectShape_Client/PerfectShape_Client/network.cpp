@@ -1,6 +1,37 @@
 #include "network.h"
 #include "protocol.h"
 
+struct PlayerInfo{
+    float x, y, z;
+    bool is_active;
+    short id;
+};
+
+struct BulletInfo {
+    bool active = false;
+    float x, y, z;
+    short id;
+};
+
+struct EnemyInfo {
+    bool active = false;
+    float x, y, z;
+    short type;
+    short hp;
+    short id;
+};
+
+const char* SERVERIP = "127.0.0.1"; // 임시
+
+WSADATA wsa;
+SOCKET sock;
+SOCKADDR_IN serveraddr;
+char recvBuf[BUF_SIZE];
+char sendBuf[BUF_SIZE];
+
+PlayerInfo me;
+PlayerInfo other[2];
+
 void err_quit(const char* msg)
 {
     LPVOID lpMsgBuf;
@@ -41,33 +72,6 @@ void err_display(int errcode)
 }
 
 
-struct PlayerInfo{
-    float x, y, z;
-    bool is_active;
-    short id;
-};
-
-struct BulletInfo {
-    bool active = false;
-    float x, y, z;
-    short id;
-};
-
-struct EnemyInfo {
-    bool active = false;
-    float x, y, z;
-    short type;
-    short hp;
-    short id;
-};
-
-const char* SERVERIP = "127.0.0.1"; // 임시
-
-WSADATA wsa;
-SOCKET sock;
-SOCKADDR_IN serveraddr;
-char recvBuf[BUF_SIZE];
-
 int NetInit() 
 {
     int retval;
@@ -95,6 +99,19 @@ void NetCleanup()
     WSACleanup();
 }
 
+int send_move_packet(int direction) 
+{
+    int retval = 0;
+
+    CS_MOVE_PACKET* mp = new CS_MOVE_PACKET{ sizeof(CS_MOVE_PACKET), CS_MOVE , me.id };
+
+    memcpy(sendBuf, reinterpret_cast<char*>(mp), sizeof(CS_MOVE_PACKET));
+
+    send(sock, sendBuf, BUF_SIZE, 0);
+    
+    return retval;
+}
+
 DWORD WINAPI do_recv()
 {
     int retval;
@@ -112,10 +129,10 @@ DWORD WINAPI do_recv()
 
         switch (type) {
         case SC_LOGININFO:{
-            SC_LOGININFO_PACKET* abcd = reinterpret_cast<SC_LOGININFO_PACKET*>(ptr);
-            printf("%c", abcd->type);
+            SC_LOGININFO_PACKET* packet = reinterpret_cast<SC_LOGININFO_PACKET*>(ptr);
+            printf("%c", packet->type);
+            break;
         }
-        break;
         case SC_ADD_PLAYER: {
             SC_ADD_PLAYER_PACKET* packet = reinterpret_cast<SC_ADD_PLAYER_PACKET*>(ptr);
             printf("%c", packet->type);

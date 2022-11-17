@@ -1,6 +1,7 @@
-/.vs 
-/PerfectShape_Client/x64
-/PerfectShape_Server/x64
+PerfectShape_Client/.vs/
+PerfectShape_Server/.vs/
+PerfectShape_Client/x64/
+PerfectShape_Server/x64/
 *.exe 
 *.ilk 
 *.pdb 
@@ -14,4 +15,3 @@
 *.db 
 *.opendb
 *.ipch
-Browse.VC.db-shm
