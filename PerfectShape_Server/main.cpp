@@ -42,9 +42,9 @@ int thread_count = 0;
 
 
 // 함수 선언
-DWORD WINAPI ProcessClient(LPVOID arg);		// 클라 쓰레드
-DWORD WINAPI SendAll(LPVOID msg);			// Send 쓰레드
-void send_login_packet(SOCKET* , int);	// 클라이언트가 접속하면 접속확인과 id를 보내는 함수
+DWORD WINAPI Receive_Client_Packet(LPVOID msg);	// 클라 Recv 쓰레드
+DWORD WINAPI SendAll(LPVOID msg);				// Send 쓰레드
+void send_login_packet(SOCKET* , int);			// 클라이언트가 접속하면 접속확인과 id를 보내는 함수
 void send_add_packet(SOCKET* , int);
 void send_remove_packet(SOCKET*, int);
 void gameStart();
@@ -113,7 +113,7 @@ int main()
 		Player* player = new Player(c_socket, _id);
 
 		// 쓰레드 만들면 주석 해제
-		hThread = CreateThread(NULL, 0,  ProcessClient, (LPVOID)player, 0, NULL);
+		hThread = CreateThread(NULL, 0, Receive_Client_Packet, (LPVOID)player, 0, NULL);
 		if (hThread == NULL) { closesocket(player->_c_socket); }
 		else { CloseHandle(hThread); }
 		thread_count++;
@@ -127,7 +127,7 @@ int main()
 	
 	// Send All 쓰레드 생성
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SendAll, 0, 0, NULL);
-	if (hThread == NULL) { cout << "쓰레드 생성 에러" << endl; }
+	if (hThread == NULL) { cout << "Send All 쓰레드 생성 에러" << endl; }
 	
 	// SetEvent
 	SetEvent(_hCalculateEvent);
@@ -141,17 +141,41 @@ int main()
 	WSACleanup();
 }
 
-
-DWORD WINAPI  ProcessClient(LPVOID arg)
+DWORD WINAPI Receive_Client_Packet(LPVOID player)
 {
+	Player* plclient = (Player*)player;
+	char buf[256];
 
-	return 0;
+	// 데이터를 받는다
+	ret = recv(plclient->_c_socket, buf, sizeof(buf), 0);
+	if (ret == SOCKET_ERROR) {
+		err_display("recv()");
+		return 0;
+	}
+
+	// 데이터를 분석한다
+	switch (buf[1])
+	{
+		case CS_LOGIN:
+		{
+			// 로그인 됐을 때 할일 처리
+			break;
+		}
+		case CS_MOVE:
+		{
+			// 움직였을 때 할일 처리
+			break;
+		}
+		case CS_MOUSECLICK:
+		{
+			// 마우스 클릭했을 때 할일 처리
+			break;
+		}
+	}
 }
 
-DWORD WINAPI  SendAll(LPVOID msg)
+DWORD WINAPI SendAll(LPVOID msg)
 {
-
-
 	// 주쓰레드가 마치기까지 기다림
 	DWORD retval = WaitForSingleObject(_hSendEvent, INFINITE);
 
@@ -167,7 +191,7 @@ DWORD WINAPI  SendAll(LPVOID msg)
 	return 0;
 }
 
-void  send_login_packet(SOCKET* c_socket, int c_id)
+void send_login_packet(SOCKET* c_socket, int c_id)
 {
 	SC_LOGININFO_PACKET p;
 	p.size = sizeof(p);
@@ -206,4 +230,8 @@ void send_remove_packet(SOCKET* c_socket, int c_id)
 	p.type = SC_REMOVE_PLAYER;
 	p.id = c_id;
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
+void gameStart()
+{
 }

@@ -3,6 +3,7 @@
 class Player
 {
 public:
+	Player();
 	Player(SOCKET& socket, int id);
 	~Player();
 public:
