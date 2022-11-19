@@ -54,7 +54,6 @@ unordered_map<int, Player>clients;
 int main()
 //--------
 {
-
 	int _id = 0;
 
 	// s소켓 연결
@@ -67,9 +66,6 @@ int main()
 	WSABUF rWsaBuf;
 	WSABUF sWsaBuf;
 	bool shutdown = false;
-
-
-
 
 	ZeroMemory(&server_addr, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
@@ -186,6 +182,19 @@ void send_add_packet(SOCKET* c_socket, int c_id)
 	p.size = sizeof(p);
 	p.type = SC_ADD_PLAYER;
 	p.id = c_id;
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
+void send_move_packet(SOCKET* c_socket, int c_id)
+{
+	SC_MOVE_PLAYER_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_MOVE_PLAYER;
+	p.id = c_id;
+	p.x = clients[c_id].x;
+	p.y = clients[c_id].y;
+	p.z = clients[c_id].z;
+
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
 

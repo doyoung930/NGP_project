@@ -3,6 +3,7 @@
 
 struct PlayerInfo{
     float x, y, z;
+    float dx, dy, dz;
     bool is_active;
     short id;
 };
@@ -27,7 +28,6 @@ WSADATA wsa;
 SOCKET sock;
 SOCKADDR_IN serveraddr;
 char recvBuf[BUF_SIZE];
-char sendBuf[BUF_SIZE];
 
 PlayerInfo me;
 PlayerInfo other[2];
@@ -103,11 +103,9 @@ int send_move_packet(int direction)
 {
     int retval = 0;
 
-    CS_MOVE_PACKET* mp = new CS_MOVE_PACKET{ sizeof(CS_MOVE_PACKET), CS_MOVE , me.id };
+    CS_MOVE_PACKET mp{ sizeof(CS_MOVE_PACKET), CS_MOVE , me.id };
 
-    memcpy(sendBuf, reinterpret_cast<char*>(mp), sizeof(CS_MOVE_PACKET));
-
-    send(sock, sendBuf, BUF_SIZE, 0);
+    send(sock, reinterpret_cast<const char*>(&mp), sizeof(CS_MOVE_PACKET), 0);
     
     return retval;
 }
