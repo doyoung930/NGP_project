@@ -103,10 +103,32 @@ int send_move_packet(int direction)
 {
     int retval = 0;
 
-    CS_MOVE_PACKET mp{ sizeof(CS_MOVE_PACKET), CS_MOVE , me.id };
+    CS_MOVE_PACKET p{ sizeof(CS_MOVE_PACKET), CS_MOVE , me.id , direction };
 
-    send(sock, reinterpret_cast<const char*>(&mp), sizeof(CS_MOVE_PACKET), 0);
+    send(sock, reinterpret_cast<const char*>(&p), sizeof(CS_MOVE_PACKET), 0);
     
+    return retval;
+}
+
+int send_attack_packet(int direction)
+{
+    int retval = 0;
+
+    CS_MOUSECLICK_PACKET p{ sizeof(CS_MOUSECLICK_PACKET), CS_MOUSECLICK , me.id };
+
+    retval = send(sock, reinterpret_cast<const char*>(&p), sizeof(CS_MOVE_PACKET), 0);
+
+    return retval;
+}
+
+int send_look_packet() // 0.01초(성능에 따라 결정)마다 한번씩 보내준다.
+{
+    int retval = 0;
+
+    CS_LOOK_PACKET p{ sizeof(CS_MOUSECLICK_PACKET), CS_LOOK , me.id , me.dx, me.dy , me.dz };
+
+    retval = send(sock, reinterpret_cast<const char*>(&p), sizeof(CS_MOVE_PACKET), 0);
+
     return retval;
 }
 

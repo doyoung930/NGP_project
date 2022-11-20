@@ -3,6 +3,7 @@
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
 constexpr char CS_MOUSECLICK = 13;
+constexpr char CS_LOOK = 14;
 
 constexpr char SC_LOGININFO = 2;
 constexpr char SC_ADD_PLAYER = 3;
@@ -15,6 +16,7 @@ constexpr char SC_BULLET = 9;
 constexpr char SC_BULLETHIT = 10;
 constexpr char SC_STAGE = 11;
 constexpr char SC_PLAYERHIT = 12;
+
 
 constexpr int PORT_NUM = 9000;
 constexpr int BUF_SIZE = 256;
@@ -38,6 +40,13 @@ struct CS_MOUSECLICK_PACKET {
 	char type;
 	short id; // 클라이언트 아이디
 	float dx, dy, dz; // 시선 벡터(플레이어의 총알 방향)
+};
+
+struct CS_LOOK_PACKET {
+	unsigned char size;
+	char type;
+	short id; // 클라이언트 아이디
+	float dx, dy, dz;
 };
 
 struct SC_LOGININFO_PACKET {
