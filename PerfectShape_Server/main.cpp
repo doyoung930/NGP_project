@@ -39,7 +39,8 @@ HANDLE _hSendEvent;
 HANDLE _hCalculateEvent;
 // 스레드 카운트
 int thread_count = 0;
-
+// 게임 상태 (false 종료 ture 시작)
+bool game_state = false;
 
 // 함수 선언
 DWORD WINAPI Receive_Client_Packet(LPVOID msg);	// 클라 Recv 쓰레드
@@ -122,13 +123,13 @@ int main()
 	// 주쓰레드 생성
 	
 	
-	// 게임 시작 초기화 함수
+	// 초기화 및 게임 시작
 	gameStart();
 	
 	// Send All 쓰레드 생성
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SendAll, 0, 0, NULL);
 	if (hThread == NULL) { cout << "Send All 쓰레드 생성 에러" << endl; }
-	
+
 	// SetEvent
 	SetEvent(_hCalculateEvent);
 
@@ -193,6 +194,7 @@ DWORD WINAPI SendAll(LPVOID msg)
 
 void send_login_packet(SOCKET* c_socket, int c_id)
 {
+	
 	SC_LOGININFO_PACKET p;
 	p.size = sizeof(p);
 	p.type = SC_LOGININFO;
@@ -234,4 +236,23 @@ void send_remove_packet(SOCKET* c_socket, int c_id)
 
 void gameStart()
 {
+	cout << "GameStart!" << endl;
+	// 초기화
+
+	game_state = true;
+}
+
+
+// 연결 해제
+void Disconnect(SOCKET* c_socket, int c_id)
+{
+	for (auto& pl : clients) {
+		if (pl.second._id == c_id) continue;
+		SC_REMOVE_PLAYER_PACKET p;
+		p.id = c_id;
+		p.size = sizeof(p);
+		p.type = SC_REMOVE_PLAYER;
+		send_remove_packet(c_socket, c_id);
+	}
+	closesocket(clients[c_id]._c_socket);
 }

@@ -10,5 +10,6 @@ public:
 	SOCKET	_c_socket;
 	int		_id;
 	float x, y, z;
+	bool	_in_use;
 };
 
