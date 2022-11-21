@@ -48,6 +48,7 @@ DWORD WINAPI SendAll(LPVOID msg);				// Send 쓰레드
 void send_login_packet(SOCKET* , int);			// 클라이언트가 접속하면 접속확인과 id를 보내는 함수
 void send_add_packet(SOCKET* , int);
 void send_remove_packet(SOCKET*, int);
+void send_start_packet(SOCKET*);
 void gameStart();
 unordered_map<int, Player>clients;
 
@@ -100,7 +101,7 @@ int main()
 
 	// accept 
 	// 3명 접속 확인
-	while (thread_count < 3)
+	while (thread_count < 1)
 	{
 		SOCKET c_socket = accept(s_socket, reinterpret_cast<sockaddr*>(&server_addr), &addr_size);
 		if (c_socket == INVALID_SOCKET) {
@@ -112,6 +113,7 @@ int main()
 		}
 		// 플레이어 생성
 		Player* player = new Player(c_socket, _id);
+		clients.try_emplace(thread_count, player);
 
 		// 쓰레드 만들면 주석 해제
 		hThread = CreateThread(NULL, 0, Receive_Client_Packet, (LPVOID)player, 0, NULL);
@@ -148,7 +150,7 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 	char buf[256];
 
 	// 데이터를 받는다
-	ret = recv(plclient->_c_socket, buf, sizeof(buf), 0);
+	ret = recv(plclient->_c_socket, buf, sizeof(buf), MSG_WAITALL);
 	if (ret == SOCKET_ERROR) {
 		err_display("recv()");
 		return 0;
@@ -194,7 +196,6 @@ DWORD WINAPI SendAll(LPVOID msg)
 
 void send_login_packet(SOCKET* c_socket, int c_id)
 {
-	
 	SC_LOGININFO_PACKET p;
 	p.size = sizeof(p);
 	p.type = SC_LOGININFO;
@@ -234,12 +235,26 @@ void send_remove_packet(SOCKET* c_socket, int c_id)
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
 
+// 게임 시작 함수
+void send_start_packet(SOCKET* c_socket)
+{
+	SC_START_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_START;
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
 void gameStart()
 {
 	cout << "GameStart!" << endl;
 	// 초기화
 
 	game_state = true;
+
+	for (auto& pl : clients)
+	{
+		send_start_packet(&pl.second._c_socket);
+	}
 }
 
 
