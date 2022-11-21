@@ -32,31 +32,35 @@ void err_quit(const char* msg)
 	exit(1);
 }
 
+struct glmvec3 {
+	float x, y, z;
+};
 
 //전역 변수
 HANDLE hThread;
 HANDLE _hSendEvent;
 HANDLE _hCalculateEvent;
 // 스레드 카운트
-int thread_count = 0;
+short thread_count = 0;
 // 게임 상태 (false 종료 ture 시작)
 bool game_state = false;
 
 // 함수 선언
 DWORD WINAPI Receive_Client_Packet(LPVOID msg);	// 클라 Recv 쓰레드
 DWORD WINAPI SendAll(LPVOID msg);				// Send 쓰레드
-void send_login_packet(SOCKET* , int);			// 클라이언트가 접속하면 접속확인과 id를 보내는 함수
-void send_add_packet(SOCKET* , int);
-void send_remove_packet(SOCKET*, int);
+void send_login_packet(SOCKET* , short);			// 클라이언트가 접속하면 접속확인과 id를 보내는 함수
+void send_add_packet(SOCKET* , short);
+void send_remove_packet(SOCKET*, short);
 void send_start_packet(SOCKET*);
 void gameStart();
-unordered_map<int, Player>clients;
+void Disconnect(SOCKET*, short);
+unordered_map<short, Player>clients;
 
 //--------
 int main()
 //--------
 {
-	int _id = 0;
+	short _id = 0;
 
 	// s소켓 연결
 	WSADATA WSAData;
@@ -76,7 +80,9 @@ int main()
 
 	if (WSAStartup(MAKEWORD(2, 2), &WSAData) != 0)
 		return false;
-	s_socket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, 0);
+	s_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if (s_socket == INVALID_SOCKET) err_quit("socket()");
+
 	ret = bind(s_socket, reinterpret_cast<sockaddr*>(&server_addr), sizeof(server_addr));
 	if (ret == SOCKET_ERROR)
 	{
@@ -113,7 +119,9 @@ int main()
 		}
 		// 플레이어 생성
 		Player* player = new Player(c_socket, _id);
-		clients.try_emplace(thread_count, player);
+		clients.try_emplace(thread_count, *player);
+
+		send_login_packet(&player->_c_socket, player->_id);
 
 		// 쓰레드 만들면 주석 해제
 		hThread = CreateThread(NULL, 0, Receive_Client_Packet, (LPVOID)player, 0, NULL);
@@ -147,17 +155,20 @@ int main()
 DWORD WINAPI Receive_Client_Packet(LPVOID player)
 {
 	Player* plclient = (Player*)player;
-	char buf[256];
+	char buf[BUF_SIZE];
 
 	// 데이터를 받는다
-	ret = recv(plclient->_c_socket, buf, sizeof(buf), MSG_WAITALL);
+	ret = recv(plclient->_c_socket, buf, sizeof(buf), 0);
 	if (ret == SOCKET_ERROR) {
 		err_display("recv()");
 		return 0;
 	}
 
+	char* p = buf;
+	char type = *(p + 1);
+
 	// 데이터를 분석한다
-	switch (buf[1])
+	switch (type)
 	{
 		case CS_LOGIN:
 		{
@@ -166,7 +177,10 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 		}
 		case CS_MOVE:
 		{
-			// 움직였을 때 할일 처리
+			float x = *(p + 3);
+			float y = *(p + 4);
+			float z = *(p + 5);
+			cout << "x = " << x << ", y = " << y << ", z = " << endl;
 			break;
 		}
 		case CS_MOUSECLICK:
@@ -194,16 +208,17 @@ DWORD WINAPI SendAll(LPVOID msg)
 	return 0;
 }
 
-void send_login_packet(SOCKET* c_socket, int c_id)
+void send_login_packet(SOCKET* c_socket, short c_id)
 {
 	SC_LOGININFO_PACKET p;
 	p.size = sizeof(p);
 	p.type = SC_LOGININFO;
 	p.id = c_id;
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+	cout << "login packet 보냄" << endl;
 }
 
-void send_add_packet(SOCKET* c_socket, int c_id)
+void send_add_packet(SOCKET* c_socket, short c_id)
 {
 	SC_ADD_PLAYER_PACKET p;
 	p.size = sizeof(p);
@@ -212,7 +227,7 @@ void send_add_packet(SOCKET* c_socket, int c_id)
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
 
-void send_move_packet(SOCKET* c_socket, int c_id)
+void send_move_packet(SOCKET* c_socket, short c_id)
 {
 	SC_MOVE_PLAYER_PACKET p;
 	p.size = sizeof(p);
@@ -226,7 +241,7 @@ void send_move_packet(SOCKET* c_socket, int c_id)
 }
 
 // 죽은 플레이어 삭제함수
-void send_remove_packet(SOCKET* c_socket, int c_id) 
+void send_remove_packet(SOCKET* c_socket, short c_id)
 {
 	SC_REMOVE_PLAYER_PACKET p;
 	p.size = sizeof(p);
@@ -242,6 +257,7 @@ void send_start_packet(SOCKET* c_socket)
 	p.size = sizeof(p);
 	p.type = SC_START;
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+	cout << "start 패킷 보냄" << endl;
 }
 
 void gameStart()
@@ -259,7 +275,7 @@ void gameStart()
 
 
 // 연결 해제
-void Disconnect(SOCKET* c_socket, int c_id)
+void Disconnect(SOCKET* c_socket, short c_id)
 {
 	for (auto& pl : clients) {
 		if (pl.second._id == c_id) continue;
@@ -270,4 +286,44 @@ void Disconnect(SOCKET* c_socket, int c_id)
 		send_remove_packet(c_socket, c_id);
 	}
 	closesocket(clients[c_id]._c_socket);
+}
+
+bool collide_sphere(glmvec3 a, glmvec3 b, float coll_dist)
+{
+	glmvec3 c;
+	c.x = a.x - b.x;
+	c.y = a.y - b.y;
+	c.z = a.z - b.z;
+
+	float dist = sqrt(c.x * c.x + c.y * c.y + c.z * c.z);
+
+	if (coll_dist > dist)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool collide_box(glmvec3 bb, glmvec3 tb, glmvec3 bb_scale, glmvec3 tb_scale)
+{
+	float size = 0.5;
+
+	glmvec3 bb_min = { bb.x - size * bb_scale.x,bb.y - size * bb_scale.y,bb.z - size * bb_scale.z };
+	glmvec3 bb_max = { bb.x + size * bb_scale.x,bb.y + size * bb_scale.y,bb.z + size * bb_scale.z };
+
+	glmvec3 tb_min = { tb.x - size * tb_scale.x ,tb.y - size * tb_scale.y,tb.z - size * tb_scale.z };
+	glmvec3 tb_max = { tb.x + size * tb_scale.x,tb.y + size * tb_scale.y,tb.z + size * tb_scale.z };
+
+	if (bb_min.x <= tb_max.x &&
+		bb_max.x >= tb_min.x &&
+		bb_min.y <= tb_max.y &&
+		bb_max.y >= tb_min.y &&
+		bb_min.z <= tb_max.z &&
+		bb_max.z >= tb_min.z)
+	{
+		return true;
+	}
+
+	return false;
 }

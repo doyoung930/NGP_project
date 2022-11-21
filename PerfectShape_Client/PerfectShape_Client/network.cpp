@@ -150,7 +150,7 @@ DWORD WINAPI do_recv()
         switch (type) {
         case SC_LOGININFO:{
             SC_LOGININFO_PACKET* packet = reinterpret_cast<SC_LOGININFO_PACKET*>(ptr);
-            printf("%c", packet->type);
+            printf("%d", packet->type);
             break;
         }
         case SC_ADD_PLAYER: {
@@ -160,7 +160,7 @@ DWORD WINAPI do_recv()
         }
         case SC_START: {
             SC_START_PACKET* packet = reinterpret_cast<SC_START_PACKET*>(ptr);
-            printf("%c", packet->type);
+            printf("%d", packet->type);
             break;
         }
         case SC_REMOVE_PLAYER: {

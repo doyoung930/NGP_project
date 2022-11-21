@@ -4,12 +4,13 @@ class Player
 {
 public:
 	Player();
-	Player(SOCKET& socket, int id);
+	Player(SOCKET& socket, short id);
 	~Player();
 public:
 	SOCKET	_c_socket;
-	int		_id;
+	short	_id;
 	float x, y, z;
+	float dx, dy, dz;
 	bool	_in_use;
 };
 

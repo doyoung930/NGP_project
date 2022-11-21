@@ -32,7 +32,9 @@ struct CS_MOVE_PACKET {
 	char	size;
 	char	type;
 	short	id;
-	char	direction;	// 0 : UP, 1: DOWN, 2 : LEFT, 3 : RIGHT
+	float	x;
+	float	y;
+	float	z;
 };
 
 struct CS_MOUSECLICK_PACKET {
