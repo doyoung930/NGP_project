@@ -51,6 +51,7 @@ DWORD WINAPI SendAll(LPVOID msg);				// Send 쓰레드
 void send_login_packet(SOCKET* , short);			// 클라이언트가 접속하면 접속확인과 id를 보내는 함수
 void send_add_packet(SOCKET* , short);
 void send_remove_packet(SOCKET*, short);
+void send_move_packet(SOCKET* c_socket, short c_id);
 void send_start_packet(SOCKET*);
 void gameStart();
 void Disconnect(SOCKET*, short);
@@ -107,7 +108,7 @@ int main()
 
 	// accept 
 	// 3명 접속 확인
-	while (thread_count < 1)
+	while (thread_count < 3)
 	{
 		SOCKET c_socket = accept(s_socket, reinterpret_cast<sockaddr*>(&server_addr), &addr_size);
 		if (c_socket == INVALID_SOCKET) {
@@ -120,9 +121,9 @@ int main()
 		// 플레이어 생성
 		Player* player = new Player(c_socket, _id);
 		clients.try_emplace(thread_count, *player);
+		cout << clients[thread_count]._id << endl;
 
 		send_login_packet(&player->_c_socket, player->_id);
-
 		// 쓰레드 만들면 주석 해제
 		hThread = CreateThread(NULL, 0, Receive_Client_Packet, (LPVOID)player, 0, NULL);
 		if (hThread == NULL) { closesocket(player->_c_socket); }
@@ -141,7 +142,7 @@ int main()
 	if (hThread == NULL) { cout << "Send All 쓰레드 생성 에러" << endl; }
 
 	// SetEvent
-	SetEvent(_hCalculateEvent);
+	//SetEvent(_hCalculateEvent);
 
 	// 메인 루프
 	while (true) {
@@ -156,37 +157,46 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 {
 	Player* plclient = (Player*)player;
 	char buf[BUF_SIZE];
-
-	// 데이터를 받는다
-	ret = recv(plclient->_c_socket, buf, sizeof(buf), 0);
-	if (ret == SOCKET_ERROR) {
-		err_display("recv()");
-		return 0;
-	}
-
-	char* p = buf;
-	char type = *(p + 1);
-
-	// 데이터를 분석한다
-	switch (type)
-	{
-		case CS_LOGIN:
-		{
-			// 로그인 됐을 때 할일 처리
-			break;
+	while (true) {
+		// 데이터를 받는다
+		ret = recv(plclient->_c_socket, buf, sizeof(buf), 0);
+		if (ret == SOCKET_ERROR) {
+			err_display("recv()");
+			return 0;
 		}
-		case CS_MOVE:
-		{
-			float x = *(p + 3);
-			float y = *(p + 4);
-			float z = *(p + 5);
-			cout << "x = " << x << ", y = " << y << ", z = " << endl;
-			break;
-		}
-		case CS_MOUSECLICK:
-		{
-			// 마우스 클릭했을 때 할일 처리
-			break;
+
+		char* p = buf;
+
+		while (p != NULL) {
+			char type = *(p + 1);
+			char size = *p;
+			if (size <= 0) {
+				break;
+			}
+			// 데이터를 분석한다
+			switch (type)
+			{
+			case CS_LOGIN:
+			{
+				// 로그인 됐을 때 할일 처리
+				break;
+			}
+			case CS_MOVE:
+			{
+				CS_MOVE_PACKET* packet = reinterpret_cast<CS_MOVE_PACKET*>(p);
+				clients[packet->id - 1].x = packet->x;
+				clients[packet->id - 1].z = packet->z;
+				
+
+				break;
+			}
+			case CS_MOUSECLICK:
+			{
+				// 마우스 클릭했을 때 할일 처리
+				break;
+			}
+			}
+			p += size;
 		}
 	}
 }
@@ -194,17 +204,17 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 DWORD WINAPI SendAll(LPVOID msg)
 {
 	// 주쓰레드가 마치기까지 기다림
-	DWORD retval = WaitForSingleObject(_hSendEvent, INFINITE);
-
-	// 모든 클라이언트들의 위치 보내기
-
-	// 모든 적의 위치 보내기
-
-	// 현재 표시되는 총알들의 위치 보내기
-
-	// 다 보냄을 알림
-	SetEvent(_hCalculateEvent);
-
+	//DWORD retval = WaitForSingleObject(_hSendEvent, INFINITE);
+	while (true) {
+		for (int i = 0; i < thread_count; ++i) {
+			for (int j = 0; j < thread_count; ++j) {
+				send_move_packet(&clients[i]._c_socket, j + 1);
+				//cout << "id = " << clients[i]._id << ", x = " << clients[i].x << ", z = " << clients[i].z << endl;
+			}
+		}
+		
+	}
+	//SetEvent(_hCalculateEvent);
 	return 0;
 }
 
@@ -233,9 +243,8 @@ void send_move_packet(SOCKET* c_socket, short c_id)
 	p.size = sizeof(p);
 	p.type = SC_MOVE_PLAYER;
 	p.id = c_id;
-	p.x = clients[c_id].x;
-	p.y = clients[c_id].y;
-	p.z = clients[c_id].z;
+	p.x = clients[c_id-1].x;
+	p.z = clients[c_id-1].z;
 
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
