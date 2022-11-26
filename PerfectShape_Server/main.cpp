@@ -257,6 +257,7 @@ void send_remove_packet(SOCKET* c_socket, short c_id)
 	p.type = SC_REMOVE_PLAYER;
 	p.id = c_id;
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+	cout << "login packet 보냄" << endl;
 }
 
 // 게임 시작 함수
