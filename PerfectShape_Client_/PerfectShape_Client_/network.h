@@ -14,4 +14,5 @@ void err_display(int errcode);
 short GetMyPlayerID();
 float GetPlayerX(short id);
 float GetPlayerZ(short id);
+bool GetGameState();
 DWORD WINAPI do_recv();

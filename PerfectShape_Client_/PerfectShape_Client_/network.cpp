@@ -19,6 +19,7 @@ SOCKADDR_IN serveraddr;
 char recvBuf[BUF_SIZE];
 
 short MyID;
+bool gameStart = false;
 PlayerInfo player[3]; 
 
 const char* SERVERIP = "127.0.0.1"; // юс╫ц
@@ -27,15 +28,16 @@ short GetMyPlayerID() {
     return MyID;
 }
 
+bool GetGameState() {
+    return gameStart;
+}
+
 float GetPlayerX(short id) {
-    //printf("%f\n", player[id - 1].x);
-     
-    return player[int(id) - 1].x;
+    return player[int(id)].x;
 }
 
 float GetPlayerZ(short id) {
-    //printf("%f\n", player[id - 1].x);
-    return player[int(id) - 1].z;
+    return player[int(id)].z;
 }
 
 int NetInit() 
@@ -112,6 +114,7 @@ DWORD WINAPI do_recv()
             switch (type) {
             case SC_LOGININFO: {
                 SC_LOGININFO_PACKET* packet = reinterpret_cast<SC_LOGININFO_PACKET*>(ptr);
+                
                 MyID = packet->id;
                 //printf("%d ", packet->type);
                 break;
@@ -122,6 +125,7 @@ DWORD WINAPI do_recv()
             }
             case SC_START: {
                 SC_START_PACKET* packet = reinterpret_cast<SC_START_PACKET*>(ptr);
+                gameStart = true;
                 //printf("%d ", packet->type);
                 break;
             }
@@ -132,10 +136,9 @@ DWORD WINAPI do_recv()
             case SC_MOVE_PLAYER: {
                 SC_MOVE_PLAYER_PACKET* packet = reinterpret_cast<SC_MOVE_PLAYER_PACKET*>(ptr);
                 short id = packet->id;
-                player[id-1].x = packet->x;
-                player[id-1].z = packet->z;
-                //printf("%f", player[id].x);
-                //printf(" %f\n", player[id].z);
+                player[id].x = packet->x;
+                player[id].z = packet->z;
+                //std::cout << player[id].id << " | " << player[id].x << " | " << player[id].z << std::endl;
                 break;
             }
             case SC_ENEMY: {

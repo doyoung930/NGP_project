@@ -263,7 +263,7 @@ GLuint s_program;
 
 clock_t start;
 
-short myID;
+int myID;
 struct NetPlayer {
 	short id;
 	GLUquadricObj* ball;
@@ -280,30 +280,30 @@ void InitVariable()
 
 	myID = GetMyPlayerID();
 
-	if (myID == 1)
+	if (myID == 0)
 		player.t = { 3.0f,0,3.0f };
 
-	else if (myID == 2)
+	else if (myID == 1)
 		player.t = { -3.0f,0,3.0f };
 
-	else if (myID == 3)
+	else if (myID == 2)
 		player.t = { -3.0f,0, -3.0f };
 
 	for (int i = 0; i < 3; ++i) {
-		NPlayers[i].id = i + 1;
+		NPlayers[i].id = i;
 		
 		if(NPlayers[i].id == myID)
 			NPlayers[i].active = false;
 		else
 			NPlayers[i].active = true;
 
-		if (NPlayers[i].id == 1)
+		if (NPlayers[i].id == 0)
 			NPlayers[i].t = { 3.0f,-0.15,3.0f };
 
-		else if (NPlayers[i].id == 2)
+		else if (NPlayers[i].id == 1)
 			NPlayers[i].t = { -3.0f,-0.15,3.0f };
 
-		else if (NPlayers[i].id == 3)
+		else if (NPlayers[i].id == 2)
 			NPlayers[i].t = { -3.0f,-0.15, -3.0f };
 	}
 
@@ -444,10 +444,10 @@ GLvoid drawScene()
 	for (int i = 0; i < 3; ++i) {
 		if (NPlayers[i].active) {
 			glm::mat4 T_players_bullet = glm::mat4(1.0f);
-			NPlayers[i].t.x = GetPlayerX(i + 1);
-			NPlayers[i].t.z = GetPlayerZ(i + 1);
+			NPlayers[i].t.x = GetPlayerX(i);
+			NPlayers[i].t.z = GetPlayerZ(i);
 			T_players_bullet = glm::translate(T_players_bullet, NPlayers[i].t);
-			//std::cout << NPlayers[i].id << " | " << NPlayers[i].t.x << " | " << NPlayers[i].t.z << std::endl;
+			std::cout << NPlayers[i].id << " | " << NPlayers[i].t.x << " | " << NPlayers[i].t.z << std::endl;
 			all = T_players_bullet;
 			glUniform3f(objColorLocation, 1.0, 1.0, 0.5);
 			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
@@ -650,13 +650,8 @@ GLvoid TimerFunction(int value)
 
 	//Timer_CheckClear();
 
-	clock_t end = clock();
-	double time = double(end - start) / CLOCKS_PER_SEC;
-	if (time > 0.016) {
-		send_move_packet(player.t.x, player.t.z);
 
-		start = clock();
-	}
+	send_move_packet(player.t.x, player.t.z);
 
 	glutPostRedisplay();
 
@@ -1426,13 +1421,13 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	//--- 윈도우 생성하기
 	NetInit();
 	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)do_recv, (LPVOID)NULL, 0, NULL);
-	Sleep(5000);
+	while(!GetGameState()){}
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GL_DEPTH);
-	glutInitWindowPosition(100 , 100 + 1000 * ((int)myID - 1));
-
 	glutInitWindowSize(window_size, window_size);
+	glutInitWindowPosition(100, 100 );
+
 	glutCreateWindow("Perfect Shape");
 	//--- GLEW 초기화하기
 	glewExperimental = GL_TRUE;
@@ -1448,7 +1443,14 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	{
 		map.LightColor[i] = 1.0f;
 	}
-	glutDisplayFunc(drawScene);
+
+	clock_t end = clock();
+	double time = double(end - start) / CLOCKS_PER_SEC;
+	if (time > 0.016) {
+
+		glutDisplayFunc(drawScene);
+		start = clock();
+	}
 	glutKeyboardFunc(Keyboard);
 	glutKeyboardUpFunc(UpKeyboard);
 	glutMouseFunc(Mouse);
@@ -1456,7 +1458,6 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutPassiveMotionFunc(PassiveMotion);
 	glutEntryFunc(MouseEntry);
 	glutTimerFunc(20, TimerFunction, 1);
-
 	glutMainLoop();
 
 	NetCleanup();
