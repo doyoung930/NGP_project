@@ -2,6 +2,7 @@
 #include "glew.h" //--- 필요한 헤더파일 include
 #include "freeglut.h"
 #include "freeglut_ext.h"
+#include "freeglut_std.h"
 #include "glm/glm/glm.hpp"
 #include "glm/glm/ext.hpp"
 #include "glm/glm/gtc/matrix_transform.hpp"

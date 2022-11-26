@@ -115,18 +115,32 @@ int main()
 			err_display("accept()");
 		}
 		else {
-			_id = thread_count + 1;
+			_id = thread_count;
 			cout << "연결성공 ID: " << _id << endl;
 		}
 		// 플레이어 생성
 		Player* player = new Player(c_socket, _id);
 		clients.try_emplace(thread_count, *player);
-		cout << clients[thread_count]._id << endl;
+		clients[thread_count]._id = _id;
 
-		send_login_packet(&player->_c_socket, player->_id);
+		if (_id == 0) {
+			clients[thread_count].x = 3.0f;
+			clients[thread_count].z = 3.0f;
+		}
+		else if (_id == 1) {
+			clients[thread_count].x = -3.0f;
+			clients[thread_count].z = 3.0f;
+		}
+		
+		else if (_id == 2) {
+			clients[thread_count].x = -3.0f;
+			clients[thread_count].z = -3.0f;
+		}
+
+		send_login_packet(&clients[thread_count]._c_socket, clients[thread_count]._id);
 		// 쓰레드 만들면 주석 해제
 		hThread = CreateThread(NULL, 0, Receive_Client_Packet, (LPVOID)player, 0, NULL);
-		if (hThread == NULL) { closesocket(player->_c_socket); }
+		if (hThread == NULL) { closesocket(clients[thread_count]._c_socket); }
 		else { CloseHandle(hThread); }
 		thread_count++;
 	}
@@ -184,10 +198,13 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 			case CS_MOVE:
 			{
 				CS_MOVE_PACKET* packet = reinterpret_cast<CS_MOVE_PACKET*>(p);
-				clients[packet->id - 1].x = packet->x;
-				clients[packet->id - 1].z = packet->z;
-				
+				int pid = packet->id;
 
+				float px = packet->x;
+				float pz = packet->z;
+				clients[pid].x = packet->x;
+				clients[pid].z = packet->z;
+				//cout << packet->id << "|" << packet->x << " | " << packet->z << endl;
 				break;
 			}
 			case CS_MOUSECLICK:
@@ -208,12 +225,14 @@ DWORD WINAPI SendAll(LPVOID msg)
 	while (true) {
 		for (int i = 0; i < thread_count; ++i) {
 			for (int j = 0; j < thread_count; ++j) {
-				send_move_packet(&clients[i]._c_socket, j + 1);
+				if(clients[i]._id != j)
+					send_move_packet(&clients[i]._c_socket, j);
 				//cout << "id = " << clients[i]._id << ", x = " << clients[i].x << ", z = " << clients[i].z << endl;
 			}
 		}
-		
+		Sleep(10);
 	}
+
 	//SetEvent(_hCalculateEvent);
 	return 0;
 }
@@ -243,8 +262,8 @@ void send_move_packet(SOCKET* c_socket, short c_id)
 	p.size = sizeof(p);
 	p.type = SC_MOVE_PLAYER;
 	p.id = c_id;
-	p.x = clients[c_id-1].x;
-	p.z = clients[c_id-1].z;
+	p.x = clients[c_id].x;
+	p.z = clients[c_id].z;
 
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
