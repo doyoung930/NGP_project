@@ -1084,17 +1084,9 @@ GLvoid Mouse(int button, int state, int x, int y)
 {
 	if (state == GLUT_DOWN && button == GLUT_LEFT_BUTTON)
 	{
-		send_attack_packet();
-		for (int i = 0; i < shp_bullet_num; i++)
-		{
-			if (player.bullet_shot[i] == false)
-			{
-				player.bullet_shot[i] = true;
-				player.bullet_t[i] = player.t;
-				player.bullet_vector[i] = glm::normalize(view_control.Direction);
-				break;
-			}
-		}
+
+		glm::vec3 tmp = glm::normalize(view_control.Direction);
+		send_attack_packet(tmp.x, tmp.y, tmp.z);
 
 		//glutPostRedisplay();
 	}

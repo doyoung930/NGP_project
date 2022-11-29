@@ -83,11 +83,18 @@ int send_move_packet(float x, float z)
     return retval;
 }
 
-int send_attack_packet()
+int send_attack_packet(float dx, float dy, float dz)
 {
     int retval = 0;
 
-    CS_MOUSECLICK_PACKET p{ sizeof(CS_MOUSECLICK_PACKET), CS_MOUSECLICK , MyID };
+    CS_MOUSECLICK_PACKET p;
+
+    p.size = sizeof(CS_MOUSECLICK_PACKET);
+    p.type = CS_MOUSECLICK;
+    p.id = MyID;
+    p.dx = dx;
+    p.dy = dy;
+    p.dz = dz;
 
     retval = send(sock, reinterpret_cast<const char*>(&p), sizeof(CS_MOUSECLICK_PACKET), 0);
 

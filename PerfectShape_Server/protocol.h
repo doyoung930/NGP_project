@@ -21,6 +21,8 @@ constexpr int PORT_NUM = 9000;
 constexpr int BUF_SIZE = 256;
 constexpr int NAMESIZE = 20;
 
+#define MAX_BULLET_NUM 60
+
 struct CS_LOGIN_PACKET {
 	char size;
 	char type;
@@ -110,4 +112,11 @@ struct SC_STAGE_PACKET {
 	unsigned char size;
 	char type;
 	short state;
+};
+
+struct Bullet
+{
+	float x, y, z;
+	float dx, dy, dz;
+	bool is_team;
 };

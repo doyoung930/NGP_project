@@ -32,7 +32,7 @@ void err_quit(const char* msg)
 	exit(1);
 }
 
-struct glmvec3 {
+struct glmvec3 { 
 	float x, y, z;
 };
 
@@ -53,9 +53,12 @@ void send_add_packet(SOCKET* , short);
 void send_remove_packet(SOCKET*, short);
 void send_move_packet(SOCKET* c_socket, short c_id);
 void send_start_packet(SOCKET*);
+void send_bullet_packet(SOCKET* c_socket, short b_id);
 void gameStart();
 void Disconnect(SOCKET*, short);
+
 unordered_map<short, Player>clients;
+Bullet* bullets[60];
 
 //--------
 int main()
@@ -224,6 +227,7 @@ DWORD WINAPI SendAll(LPVOID msg)
 	//DWORD retval = WaitForSingleObject(_hSendEvent, INFINITE);
 	while (true) {
 		for (int i = 0; i < thread_count; ++i) {
+			// 클라이언트의 위치전송
 			for (int j = 0; j < thread_count; ++j) {
 				if(clients[i]._id != j)
 					send_move_packet(&clients[i]._c_socket, j);
@@ -268,6 +272,19 @@ void send_move_packet(SOCKET* c_socket, short c_id)
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
 
+void send_bullet_packet(SOCKET* c_socket, short b_id)
+{
+	SC_BULLET_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_BULLET;
+	p.bullet_id = b_id;
+	p.x = bullets[b_id]->x;
+	p.y = bullets[b_id]->y;
+	p.z = bullets[b_id]->z;
+
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
 // 죽은 플레이어 삭제함수
 void send_remove_packet(SOCKET* c_socket, short c_id)
 {
@@ -301,7 +318,6 @@ void gameStart()
 		send_start_packet(&pl.second._c_socket);
 	}
 }
-
 
 // 연결 해제
 void Disconnect(SOCKET* c_socket, short c_id)

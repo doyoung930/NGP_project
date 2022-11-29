@@ -20,6 +20,8 @@ constexpr int PORT_NUM = 9000;
 constexpr int BUF_SIZE = 1024;
 constexpr int NAMESIZE = 20;
 
+#define MAX_BULLET_NUM 60
+
 struct PlayerInfo {
 	float x{}, y{}, z{};
 	bool is_active;
@@ -58,6 +60,7 @@ struct CS_MOUSECLICK_PACKET {
 	unsigned char size;
 	char type;
 	short id; // 클라이언트 아이디
+	float dx, dy, dz;
 };
 
 struct SC_LOGININFO_PACKET {
@@ -127,4 +130,11 @@ struct SC_STAGE_PACKET {
 	unsigned char size;
 	char type;
 	short state;
+};
+
+struct Bullet
+{
+	float x, y, z;
+	float dx, dy, dz;
+	bool is_team;
 };
