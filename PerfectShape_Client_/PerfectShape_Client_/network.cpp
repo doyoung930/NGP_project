@@ -106,6 +106,7 @@ DWORD WINAPI do_recv()
     int retval;
 
     while (true) {
+        ZeroMemory(recvBuf, BUF_SIZE);
         retval = recv(sock, recvBuf, BUF_SIZE, 0);
         if (retval == SOCKET_ERROR) err_display("RECV()");
         char* ptr = recvBuf;

@@ -7,7 +7,7 @@ void err_quit(const char* );
 int NetInit();
 void NetCleanup();
 int send_move_packet(float x, float z);
-int send_attack_packet();
+int send_attack_packet(float, float, float);
 void err_quit(const char* msg);
 void err_display(const char* msg);
 void err_display(int errcode);

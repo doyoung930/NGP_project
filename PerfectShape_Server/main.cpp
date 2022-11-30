@@ -111,7 +111,7 @@ int main()
 
 	// accept 
 	// 3명 접속 확인
-	while (thread_count < 3)
+	while (thread_count < 2)
 	{
 		SOCKET c_socket = accept(s_socket, reinterpret_cast<sockaddr*>(&server_addr), &addr_size);
 		if (c_socket == INVALID_SOCKET) {
@@ -173,9 +173,11 @@ int main()
 DWORD WINAPI Receive_Client_Packet(LPVOID player)
 {
 	Player* plclient = (Player*)player;
+	
 	char buf[BUF_SIZE];
 	while (true) {
 		// 데이터를 받는다
+		ZeroMemory(buf, sizeof(buf));
 		ret = recv(plclient->_c_socket, buf, sizeof(buf), 0);
 		if (ret == SOCKET_ERROR) {
 			err_display("recv()");

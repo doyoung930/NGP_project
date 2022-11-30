@@ -14,7 +14,6 @@
 #include "stb_image.h" // << 위 define과 붙어 있어한다 함. 아니면 오류남(원인 모름)
 
 #define shp_bullet_num 20
-#define window_size 900
 
 typedef struct m {
 	// 마우스 시점 제어
@@ -582,7 +581,7 @@ GLvoid drawScene()
 	glDrawArrays(GL_LINES, 0, 4);
 
 	//-------------------------------//
-	glViewport(700, 700, 200, 200);
+	glViewport(width - width / 5, height - height / 5, height / 5, height / 5);
 	glUniform1f(FragKindLocation, 0.0f);
 	cameraPos = glm::vec3(0.0f, 50.0f, 0.0f);
 	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -1102,8 +1101,8 @@ GLvoid MouseEntry(int state)
 {
 	if (state == GLUT_LEFT)
 	{
-		glutWarpPointer(window_size / 2, window_size / 2);
-		view_control.previous_x = window_size / 2; view_control.previous_y = window_size / 2;
+		glutWarpPointer(width / 2, height / 2);
+		view_control.previous_x = width / 2; view_control.previous_y = height / 2;
 		//glutWarpPointer(width / 2, height / 2);
 		//view_control.previous_x = width / 2; view_control.previous_y = height / 2;
 	}
@@ -1413,22 +1412,33 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	//--- 윈도우 생성하기
 	NetInit();
 	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)do_recv, (LPVOID)NULL, 0, NULL);
-	while(!GetGameState()){}
+	while (!GetGameState()) {}
+
 
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GL_DEPTH);
-	glutInitWindowSize(window_size, window_size);
-	glutInitWindowPosition(100, 100 );
-
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
+	glutInitWindowPosition(100, 100);
+	width = height = 900;
+	glutInitWindowSize(width, height);
 	glutCreateWindow("Perfect Shape");
+
 	//--- GLEW 초기화하기
 	glewExperimental = GL_TRUE;
-	glewInit();
+	GLenum err = glewInit();
+	if (GLEW_OK != err)
+	{
+		/* Problem: glewInit failed, something is seriously wrong. */
+		std::cerr << "Error: " << glewGetErrorString(err) << std::endl;
+
+	}
+	else {
+		std::cerr << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
+	}
 
 	InitVariable(); //  초기화
 	InitShader();
-	InitBuffer();
 	InitTexture();
+	InitBuffer();
 
 	timefunc_flag = 1;
 	for (int i = 0; i < 3; i++)
