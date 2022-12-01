@@ -58,7 +58,7 @@ void gameStart();
 void Disconnect(SOCKET*, short);
 
 unordered_map<short, Player>clients;
-Bullet* bullets[60];
+Bullet bullets[60];
 
 //--------
 int main()
@@ -159,11 +159,21 @@ int main()
 	if (hThread == NULL) { cout << "Send All 쓰레드 생성 에러" << endl; }
 
 	// SetEvent
-	//SetEvent(_hCalculateEvent);
-
 	// 메인 루프
 	while (true) {
-		
+		DWORD retval = WaitForSingleObject(_hCalculateEvent, INFINITE);
+		// 총알 위치 이동 및 충돌 체크
+		for (int i = 0; i < MAX_BULLET_NUM; ++i) {
+			if (bullets[i].is_active) {
+				if (bullets[i].IsOut()) {
+					bullets[i].is_active = false;
+				}
+				else {
+					bullets[i].update();
+				}
+			}
+		}
+		SetEvent(_hSendEvent);
 	}
 	
 	closesocket(c_socket);
@@ -215,6 +225,25 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 			case CS_MOUSECLICK:
 			{
 				// 마우스 클릭했을 때 할일 처리
+				CS_MOUSECLICK_PACKET* packet = reinterpret_cast<CS_MOUSECLICK_PACKET*>(p);
+				int c_id = packet->id;
+
+				for (int i = 0; i < MAX_BULLET_NUM; ++i) {
+					if (!bullets[i].is_active) {
+						bullets[i].is_active = true;
+						bullets[i].is_team = true;
+
+						bullets[i].x = clients[c_id].x;
+						bullets[i].y = clients[c_id].y;
+						bullets[i].z = clients[c_id].z;
+
+						bullets[i].dx = packet->dx;
+						bullets[i].dy = packet->dy;
+						bullets[i].dz = packet->dz; 
+						break;
+					}
+				}
+
 				break;
 			}
 			}
@@ -226,8 +255,8 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 DWORD WINAPI SendAll(LPVOID msg)
 {
 	// 주쓰레드가 마치기까지 기다림
-	//DWORD retval = WaitForSingleObject(_hSendEvent, INFINITE);
 	while (true) {
+		DWORD retval = WaitForSingleObject(_hSendEvent, INFINITE);
 		for (int i = 0; i < thread_count; ++i) {
 			// 클라이언트의 위치전송
 			for (int j = 0; j < thread_count; ++j) {
@@ -235,11 +264,18 @@ DWORD WINAPI SendAll(LPVOID msg)
 					send_move_packet(&clients[i]._c_socket, j);
 				//cout << "id = " << clients[i]._id << ", x = " << clients[i].x << ", z = " << clients[i].z << endl;
 			}
+			// 총알 위치 전송
+			for (int k = 0; k < MAX_BULLET_NUM; ++k) {
+				if (bullets[k].is_active) {
+					send_bullet_packet(&clients[i]._c_socket, k);
+				}
+			}
 		}
+		SetEvent(_hCalculateEvent);
 		Sleep(10);
 	}
 
-	//SetEvent(_hCalculateEvent);
+
 	return 0;
 }
 
@@ -280,9 +316,9 @@ void send_bullet_packet(SOCKET* c_socket, short b_id)
 	p.size = sizeof(p);
 	p.type = SC_BULLET;
 	p.bullet_id = b_id;
-	p.x = bullets[b_id]->x;
-	p.y = bullets[b_id]->y;
-	p.z = bullets[b_id]->z;
+	p.x = bullets[b_id].x;
+	p.y = bullets[b_id].y;
+	p.z = bullets[b_id].z;
 
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }

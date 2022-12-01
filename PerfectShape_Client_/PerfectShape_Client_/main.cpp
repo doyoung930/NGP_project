@@ -1,5 +1,6 @@
 #include <iostream>
 #include "network.h"
+#include "protocol.h"
 #include "glew.h" //--- 필요한 헤더파일 include
 #include "freeglut.h"
 #include "freeglut_ext.h"
@@ -258,6 +259,10 @@ GLuint vao_enemy, vbo_enemy[2];
 GLuint vao_cross, vbo_cross;
 GLuint vao_particle, vbo_particle[2];
 GLUquadricObj* bullet_qobj[shp_bullet_num];
+
+Bullet NetBullets[MAX_BULLET_NUM];
+GLUquadricObj* NetBullet_qobj;
+
 GLuint s_program;
 
 clock_t start;
@@ -376,7 +381,9 @@ GLvoid drawScene()
 	unsigned int viewposLocation = glGetUniformLocation(s_program, "viewPos");
 
 	unsigned int FragKindLocation = glGetUniformLocation(s_program, "fragKind"); // 프레그먼트의 종류 0.0f: 조명 X || 1.0f: 조명 O
+	unsigned int ambientLightColorLocation = glGetUniformLocation(s_program, "ambientLightColor");
 
+	glUniform3f(ambientLightColorLocation, 0.9, 0.9, 0.9);
 	glUniform3f(lightColorLocation, map.LightColor[0], map.LightColor[1], map.LightColor[2]);
 	glUniform3f(objColorLocation, 0.0, 0.5, 0.5);
 	glUniform3f(viewposLocation, player.t.x, player.t.y, player.t.z);
@@ -440,55 +447,61 @@ GLvoid drawScene()
 		}
 	}
 
+	glUniform3f(objColorLocation, 1.0, 1.0, 0.0);
 	for (int i = 0; i < 3; ++i) {
 		if (NPlayers[i].active) {
 			glm::mat4 T_players_bullet = glm::mat4(1.0f);
 			NPlayers[i].t.x = GetPlayerX(i);
 			NPlayers[i].t.z = GetPlayerZ(i);
 			T_players_bullet = glm::translate(T_players_bullet, NPlayers[i].t);
-			std::cout << NPlayers[i].id << " | " << NPlayers[i].t.x << " | " << NPlayers[i].t.z << std::endl;
+			//std::cout << NPlayers[i].id << " | " << NPlayers[i].t.x << " | " << NPlayers[i].t.z << std::endl;
 			all = T_players_bullet;
-			glUniform3f(objColorLocation, 1.0, 1.0, 0.5);
 			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
 			GenShpere(NPlayers[i].ball, 0, 0.4, 20);
 		}
 	}
+
 	{
-		//// 가짜 방들
-		//glFrontFace(GL_CW);
-		//glUniform3f(lightColorLocation, 0.2, 0.2, 0.2);
-		//for (int i = 0; i < 4; i++)
-		//{
-		//	T_field = glm::mat4(1.0f);
-		//	T_field = translate(T_field, map.rooms_t[i]);
-		//	all = T_field * S_rooms;
-		//	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
-		//	glBindVertexArray(vao_map);
-		//	glBindTexture(GL_TEXTURE_2D, Texture_Floor);
-		//	glDrawArrays(GL_TRIANGLES, 24, 6);
+		// 가짜 방들
+		glFrontFace(GL_CW);
+		glUniform3f(lightColorLocation, 0.2, 0.2, 0.2);
+		for (int i = 0; i < 4; i++)
+		{
+			T_field = glm::mat4(1.0f);
+			T_field = translate(T_field, map.rooms_t[i]);
+			all = T_field * S_rooms;
+			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+			glBindVertexArray(vao_map);
+			glBindTexture(GL_TEXTURE_2D, Texture_Floor);
+			glDrawArrays(GL_TRIANGLES, 24, 6);
 
-		//	glBindTexture(GL_TEXTURE_2D, Texture_Wall[2]);
-		//	glDrawArrays(GL_TRIANGLES, 30, 6);
+			glBindTexture(GL_TEXTURE_2D, Texture_Wall[2]);
+			glDrawArrays(GL_TRIANGLES, 30, 6);
 
-		//	if (i != 2) glDrawArrays(GL_TRIANGLES, 0, 6);
-		//	if (i != 3) glDrawArrays(GL_TRIANGLES, 6, 6);
-		//	if (i != 1) glDrawArrays(GL_TRIANGLES, 12, 6);
-		//	if (i != 0) glDrawArrays(GL_TRIANGLES, 18, 6);
-		//}
-		//glFrontFace(GL_CCW);
-		////총알
-		//glUniform3f(objColorLocation, 1.0, 1.0, 0.0);
-		//for (int i = 0; i < shp_bullet_num; i++)
-		//{
-		//	if (player.bullet_shot[i] == true)
-		//	{
-		//		glm::mat4 T_bullet = glm::mat4(1.0f);
-		//		T_bullet = glm::translate(T_bullet, player.bullet_t[i]);
-		//		all = T_bullet;
-		//		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
-		//		GenShpere(bullet_qobj[i], 1, 0.015, 10);
-		//	}
-		//}
+			if (i != 2) glDrawArrays(GL_TRIANGLES, 0, 6);
+			if (i != 3) glDrawArrays(GL_TRIANGLES, 6, 6);
+			if (i != 1) glDrawArrays(GL_TRIANGLES, 12, 6);
+			if (i != 0) glDrawArrays(GL_TRIANGLES, 18, 6);
+		}
+		glFrontFace(GL_CCW);
+		// 총알
+		glUniform3f(objColorLocation, 0.5, 0.3, 1.0);
+		for (int i = 0; i < MAX_BULLET_NUM; i++)
+		{	
+			NetBullets[i].is_active = GetBulletState(i);
+			if (NetBullets[i].is_active == true)
+			{
+				std::cout << i << "|" << NetBullets[i].x << std::endl;
+				glm::mat4 T_bullet = glm::mat4(1.0f);
+				NetBullets[i].x = GetBulletX(i);
+				NetBullets[i].y = GetBulletY(i);
+				NetBullets[i].z = GetBulletZ(i);
+				T_bullet = glm::translate(T_bullet, { NetBullets[i].x,NetBullets[i].y,NetBullets[i].z });
+				all = T_bullet;
+				glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+				GenShpere(NetBullet_qobj, 1, 0.03, 6);
+			}
+		}
 		//// 적들
 		//for (int i = 0; i < 20; i++)
 		//{
@@ -563,6 +576,9 @@ GLvoid drawScene()
 	}
 
 	//크로스 헤어
+
+	glUniform3f(ambientLightColorLocation, 1.0, 1.0, 1.0);
+
 	glUniform1f(FragKindLocation, 0.0f);
 	cameraPos = glm::vec3(0.0f, 0.0f, -0.01f); //--- 카메라 위치
 	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f); //--- 카메라 바라보는 방향
@@ -581,7 +597,7 @@ GLvoid drawScene()
 	glDrawArrays(GL_LINES, 0, 4);
 
 	//-------------------------------//
-	glViewport(width - width / 5, height - height / 5, height / 5, height / 5);
+	glViewport(width - width / 5 - 10, height - height / 5 - 80, height / 5, height / 5);
 	glUniform1f(FragKindLocation, 0.0f);
 	cameraPos = glm::vec3(0.0f, 50.0f, 0.0f);
 	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -591,7 +607,7 @@ GLvoid drawScene()
 
 	projection = glm::ortho(-4.0, 4.0, -4.0, 4.0, -4.0, 60.0);
 	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
-	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
+	//glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
 
 	//중간 방 바닥,천장
 	T_field = glm::mat4(1.0f);
@@ -602,32 +618,43 @@ GLvoid drawScene()
 	glBindVertexArray(vao_enemy);
 	glDrawArrays(GL_TRIANGLES, 30, 6);
 
-	glUniform3f(objColorLocation, 1.0, 0.0, 0.0);
-	glm::mat4 T_player = glm::mat4(1.0f);
-	glm::mat4 S_player = glm::mat4(1.0f);
-	T_player = glm::translate(T_player, player.t);
-	S_player = glm::scale(S_player, { 0.5,0.5,0.5 });
-	all = T_player * S_player;
-	glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
-	glBindVertexArray(vao_enemy);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
-
-	for (int i = 0; i < 20; i++)
-	{
-		glUniform3f(objColorLocation, 0.11, 0.33, 0.99);
-		if (enemy[i].in_room == true)
-		{
-			glm::mat4 T_enemy = glm::mat4(1.0f);
-			glm::mat4 S_enemy = glm::mat4(1.0f);
-			T_enemy = glm::translate(T_enemy, enemy[i].t);
-			S_enemy = glm::scale(S_enemy, enemy[i].s);
-
-			all = T_enemy * S_enemy;
+	glUniform3f(objColorLocation, 1.0, 1.0, 0.0);
+	for (int i = 0; i < 3; ++i) {
+		if (NPlayers[i].active) {
+			glm::mat4 T_players = glm::mat4(1.0f);
+			NPlayers[i].t.x = GetPlayerX(i);
+			NPlayers[i].t.z = GetPlayerZ(i);
+			T_players = glm::translate(T_players, NPlayers[i].t);
+			all = T_players;
 			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
-			glBindVertexArray(vao_enemy);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+			GenShpere(NPlayers[i].ball, 0, 0.4, 5);
+		}
+
+		else {
+			glm::mat4 T_players = glm::mat4(1.0f);
+			T_players = glm::translate(T_players, player.t);
+			all = T_players;
+			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+			GenShpere(NPlayers[i].ball, 0, 0.4, 5);
 		}
 	}
+
+	//for (int i = 0; i < 20; i++)
+	//{
+	//	glUniform3f(objColorLocation, 0.11, 0.33, 0.99);
+	//	if (enemy[i].in_room == true)
+	//	{
+	//		glm::mat4 T_enemy = glm::mat4(1.0f);
+	//		glm::mat4 S_enemy = glm::mat4(1.0f);
+	//		T_enemy = glm::translate(T_enemy, enemy[i].t);
+	//		S_enemy = glm::scale(S_enemy, enemy[i].s);
+
+	//		all = T_enemy * S_enemy;
+	//		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+	//		glBindVertexArray(vao_enemy);
+	//		glDrawArrays(GL_TRIANGLES, 0, 36);
+	//	}
+	//}
 
 	glutSwapBuffers();
 }
@@ -1083,11 +1110,10 @@ GLvoid Mouse(int button, int state, int x, int y)
 {
 	if (state == GLUT_DOWN && button == GLUT_LEFT_BUTTON)
 	{
-
 		glm::vec3 tmp = glm::normalize(view_control.Direction);
 		send_attack_packet(tmp.x, tmp.y, tmp.z);
 
-		//glutPostRedisplay();
+		glutPostRedisplay();
 	}
 
 	//if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
@@ -1412,12 +1438,11 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	//--- 윈도우 생성하기
 	NetInit();
 	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)do_recv, (LPVOID)NULL, 0, NULL);
-	while (!GetGameState()) {}
-
+	//while (!GetGameState()) {}
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
-	glutInitWindowPosition(100, 100);
+	glutInitWindowPosition(10, 10);
 	width = height = 900;
 	glutInitWindowSize(width, height);
 	glutCreateWindow("Perfect Shape");
@@ -1437,8 +1462,8 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 
 	InitVariable(); //  초기화
 	InitShader();
-	InitTexture();
 	InitBuffer();
+	InitTexture();
 
 	timefunc_flag = 1;
 	for (int i = 0; i < 3; i++)

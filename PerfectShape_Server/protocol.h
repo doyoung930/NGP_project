@@ -118,5 +118,33 @@ struct Bullet
 {
 	float x, y, z;
 	float dx, dy, dz;
+	bool is_active;
 	bool is_team;
+
+	Bullet()
+	{
+		x = 0; y = 0; z = 0;
+		dx = 0; dy = 0; dz = 0;
+		is_active = false;
+		is_team = false;
+	};
+
+	void update() {
+		x += 0.3f * dx;
+		y += 0.3f * dy;
+		z += 0.3f * dz;
+	}
+
+	bool IsOut() {
+		if (x > 5.0f || x < -5.0f) {
+			return true;
+		}
+		if (y > 10.0f || y < -1.0f) {
+			return true;
+		}
+		if (z > 5.0f || z < -5.0f) {
+			return true;
+		}
+		return false;
+	}
 };

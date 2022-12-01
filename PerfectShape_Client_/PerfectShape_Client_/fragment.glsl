@@ -7,6 +7,7 @@ uniform vec3 lightPos;
 uniform vec3 lightColor; 
 uniform vec3 objectColor; 
 uniform vec3 viewPos;
+uniform vec3 ambientLightColor;
 
 uniform float fragKind;
 
@@ -15,7 +16,7 @@ uniform sampler2D texture1;
 
 void main ()
 {
-	vec3 ambientLight = vec3(0.6f,0.6f,0.6f);
+	vec3 ambientLight = ambientLightColor;
 	vec3 ambient = ambientLight;
 
 	vec3 normalVector = normalize(Normal);

@@ -20,25 +20,10 @@ char recvBuf[BUF_SIZE];
 
 short MyID;
 bool gameStart = false;
-PlayerInfo player[3]; 
+PlayerInfo player[3];
+Bullet bullets[MAX_BULLET_NUM];
 
 const char* SERVERIP = "127.0.0.1"; // юс╫ц
-
-short GetMyPlayerID() {
-    return MyID;
-}
-
-bool GetGameState() {
-    return gameStart;
-}
-
-float GetPlayerX(short id) {
-    return player[int(id)].x;
-}
-
-float GetPlayerZ(short id) {
-    return player[int(id)].z;
-}
 
 int NetInit() 
 {
@@ -159,6 +144,11 @@ DWORD WINAPI do_recv()
             }
             case SC_BULLET: {
                 SC_BULLET_PACKET* packet = reinterpret_cast<SC_BULLET_PACKET*>(ptr);
+                int b_id = packet->bullet_id;
+                bullets[b_id].is_active = true;
+                bullets[b_id].x = packet->x;
+                bullets[b_id].y = packet->y;
+                bullets[b_id].z = packet->z;
                 break;
             }
             case SC_BULLETHIT: {
@@ -177,6 +167,39 @@ DWORD WINAPI do_recv()
             ptr += size;
         }
     }
+}
+
+short GetMyPlayerID() {
+    return MyID;
+}
+
+bool GetGameState() {
+    return gameStart;
+}
+
+float GetPlayerX(short id) {
+    return player[int(id)].x;
+}
+
+float GetPlayerZ(short id) {
+    return player[int(id)].z;
+}
+
+bool GetBulletState(int id) {
+    return bullets[id].is_active;
+}
+
+float GetBulletX(int id) {
+    return bullets[id].x;
+}
+
+float GetBulletY(int id) {
+    return bullets[id].y;
+}
+
+
+float GetBulletZ(int id) {
+    return bullets[id].z;
 }
 
 void err_quit(const char* msg)
