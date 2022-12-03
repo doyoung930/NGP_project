@@ -15,13 +15,14 @@ constexpr char SC_BULLET = 9;
 constexpr char SC_BULLETHIT = 10;
 constexpr char SC_STAGE = 11;
 constexpr char SC_PLAYERHIT = 12;
-
+constexpr char SC_GEN_ENEMY = 14;
 
 constexpr int PORT_NUM = 9000;
 constexpr int BUF_SIZE = 256;
 constexpr int NAMESIZE = 20;
 
 #define MAX_BULLET_NUM 60
+#define MAX_ENEMY_NUM 20
 
 struct CS_LOGIN_PACKET {
 	char size;
@@ -85,13 +86,21 @@ struct SC_ENEMY_PACKET {
 	unsigned char size;
 	char type;
 	short id;
+	float x, z;
+};
+
+struct SC_GEN_ENEMY_PACKET {
+	unsigned char size;
+	char type;
+	short id;
+	int hp;
+	int kind;
 	float x, y, z;
 };
 
 struct SC_ENERMYHIT_PACKET {
 	unsigned char size;
 	char type;
-	short hp;
 	short id;
 };
 

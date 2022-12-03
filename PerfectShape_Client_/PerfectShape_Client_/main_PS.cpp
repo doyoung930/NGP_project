@@ -1265,7 +1265,6 @@ GLvoid Motion(int x, int y)
 
 GLvoid PassiveMotion(int x, int y)
 {
-
 	CalculateMouseDelta(x, y);
 }
 

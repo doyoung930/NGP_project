@@ -20,8 +20,11 @@ char recvBuf[BUF_SIZE];
 
 short MyID;
 bool gameStart = false;
+bool EnemySet = false;
 PlayerInfo player[3];
 Bullet bullets[MAX_BULLET_NUM];
+
+Enemy enemy[MAX_ENEMY_NUM];
 
 const char* SERVERIP = "127.0.0.1"; // юс╫ц
 
@@ -134,8 +137,24 @@ DWORD WINAPI do_recv()
                 //std::cout << player[id].id << " | " << player[id].x << " | " << player[id].z << std::endl;
                 break;
             }
+            case SC_GEN_ENEMY: {
+                SC_GEN_ENEMY_PACKET* packet = reinterpret_cast<SC_GEN_ENEMY_PACKET*>(ptr);
+                short id = packet->id;
+                enemy[id].hp = packet->hp;
+                enemy[id].kind = packet->kind;
+                enemy[id].x = packet->x;
+                enemy[id].y = packet->y;
+                enemy[id].z = packet->z;
+                enemy[id].is_active = true;
+                //std::cout << id << " | " << enemy[id].x << " | " << enemy[id].z << std::endl;
+                break;
+            }
             case SC_ENEMY: {
                 SC_ENEMY_PACKET* packet = reinterpret_cast<SC_ENEMY_PACKET*>(ptr);
+                short id = packet->id;
+                enemy[id].x = packet->x;
+                enemy[id].z = packet->z;
+                //std::cout << id << " | " << enemy[id].x << " | " << enemy[id].z << std::endl;
                 break;
             }
             case SC_ENERMYHIT: {
@@ -200,6 +219,34 @@ float GetBulletY(int id) {
 
 float GetBulletZ(int id) {
     return bullets[id].z;
+}
+
+bool GetEnemySet() {
+    return EnemySet;
+}
+
+int GetEnemyKind(int id) {
+    return enemy[id].kind;
+}
+
+int GetEnemyHP(int id) {
+    return enemy[id].hp;
+}
+
+float GetEnemyX(int id) {
+    return enemy[id].x;
+}
+
+float GetEnemyY(int id) {
+    return enemy[id].y;
+}
+
+float GetEnemyZ(int id) {
+    return enemy[id].z;
+}
+
+bool GetEnemyState(int id) {
+    return enemy[id].is_active;
 }
 
 void err_quit(const char* msg)

@@ -1,5 +1,11 @@
 #include "header.h"
 #include "Player.h"
+#include "enemy.h"
+#include <random>
+
+std::random_device rd;
+std::mt19937 gen(rd());
+std::uniform_int_distribution<> dist(-200, 200);
 
 // 오류검사
 int ret;
@@ -54,11 +60,16 @@ void send_remove_packet(SOCKET*, short);
 void send_move_packet(SOCKET* c_socket, short c_id);
 void send_start_packet(SOCKET*);
 void send_bullet_packet(SOCKET* c_socket, short b_id);
+void send_GenRandEnemy_packet(SOCKET* c_socket, int e_id);
+void send_enemy_packet(SOCKET* c_socket, int e_id);
+void GenRandEnemy(int clear_num);
+void SetEnemies();
 void gameStart();
 void Disconnect(SOCKET*, short);
 
 unordered_map<short, Player>clients;
-Bullet bullets[60];
+Bullet bullets[MAX_BULLET_NUM];
+Enemy enemy[MAX_ENEMY_NUM];
 
 //--------
 int main()
@@ -149,7 +160,7 @@ int main()
 	}
 
 	// 주쓰레드 생성
-	
+	SetEnemies();
 	
 	// 초기화 및 게임 시작
 	gameStart();
@@ -270,12 +281,17 @@ DWORD WINAPI SendAll(LPVOID msg)
 					send_bullet_packet(&clients[i]._c_socket, k);
 				}
 			}
+
+			for (int q = 0; q < MAX_ENEMY_NUM; ++q) {
+				//cout << q << " | " << enemy[q].x << " | " << enemy[q].z << endl;
+				if (enemy[q].kind != 4) {
+					send_enemy_packet(&clients[i]._c_socket, q);
+				}
+			}
 		}
 		SetEvent(_hCalculateEvent);
 		Sleep(10);
 	}
-
-
 	return 0;
 }
 
@@ -334,6 +350,33 @@ void send_remove_packet(SOCKET* c_socket, short c_id)
 	cout << "login packet 보냄" << endl;
 }
 
+void send_enemy_packet(SOCKET* c_socket, int e_id)
+{
+	SC_ENEMY_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_ENEMY;
+	p.id = e_id;
+	p.x = enemy[e_id].x;
+	p.z = enemy[e_id].z;
+
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
+void send_GenRandEnemy_packet(SOCKET* c_socket, int e_id)
+{
+	SC_GEN_ENEMY_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_GEN_ENEMY;
+	p.id = e_id;
+	p.kind = enemy[e_id].kind;
+	p.hp = enemy[e_id].hp;
+	p.x = enemy[e_id].x;
+	p.y = enemy[e_id].y;
+	p.z = enemy[e_id].z;
+
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
 // 게임 시작 함수
 void send_start_packet(SOCKET* c_socket)
 {
@@ -354,6 +397,46 @@ void gameStart()
 	for (auto& pl : clients)
 	{
 		send_start_packet(&pl.second._c_socket);
+	}
+}
+
+void SetEnemies()
+{
+	GenRandEnemy(0);
+
+	for (int j = 0; j < thread_count; ++j) {
+		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
+			send_GenRandEnemy_packet(&clients[j]._c_socket, i);
+		}
+	}
+}
+
+void GenRandEnemy(int clear_num)
+{
+	for (int i = 0; i < MAX_ENEMY_NUM; i++)
+	{
+		enemy[i].is_active = true;
+		enemy[i].shot == false;
+		enemy[i].kind = abs(dist(gen) % 5);
+		if (enemy[i].kind < 4)
+		{
+			enemy[i].hp = abs(dist(gen) % 2) + 2;
+			enemy[i].speed = 0.035 / (float)enemy[i].hp;
+			enemy[i].radius = 0.5 * (float)enemy[i].hp * 0.25f * 1.3f;
+			enemy[i].x = (float)dist(gen) / 50.f;
+			enemy[i].y = (float)enemy[i].hp * 0.25f * 0.5f - 0.5f;
+			enemy[i].z = (float)dist(gen) / 50.f;
+		}
+
+		else if (enemy[i].kind == 4)
+		{
+			enemy[i].hp = 1;
+			enemy[i].speed = 0.1;
+			enemy[i].radius = 0.5 * (float)enemy[i].hp * 0.25f * 1.2;
+			enemy[i].x = (float)dist(gen) / 50.f;
+			enemy[i].y = abs((float)dist(gen) / 100.f) + 2.0f;
+			enemy[i].z = (float)dist(gen) / 50.f;
+		}
 	}
 }
 

@@ -114,7 +114,7 @@ typedef struct enemy {
 
 	glm::vec3 view;
 	glm::vec3 up;
-	float ry;
+	float ry{};
 
 	glm::vec3 vector; //이동 방향 혹은
 	glm::vec3 t; //  적 위치
@@ -151,6 +151,7 @@ bool collide_sphere(glm::vec3 a, glm::vec3 b, float coll_dist);
 bool collide_box(glm::vec3 bb, glm::vec3 tb, glm::vec3 bb_scale, glm::vec3 tb_scale);
 float CalculateRotate(glm::vec3 n, glm::vec3 t, bool normal_z);
 glm::vec3 CC_CalculateRVector(glm::vec3 input, glm::vec3 normal);
+void RecvEnemyInfo();
 
 void Timer_PlayerRun();
 void Timer_CC_Player_Enemy();
@@ -491,7 +492,7 @@ GLvoid drawScene()
 			NetBullets[i].is_active = GetBulletState(i);
 			if (NetBullets[i].is_active == true)
 			{
-				std::cout << i << "|" << NetBullets[i].x << std::endl;
+				//std::cout << i << "|" << NetBullets[i].x << std::endl;
 				glm::mat4 T_bullet = glm::mat4(1.0f);
 				NetBullets[i].x = GetBulletX(i);
 				NetBullets[i].y = GetBulletY(i);
@@ -502,81 +503,85 @@ GLvoid drawScene()
 				GenShpere(NetBullet_qobj, 1, 0.03, 6);
 			}
 		}
-		//// 적들
-		//for (int i = 0; i < 20; i++)
-		//{
-		//	glUniform1f(FragKindLocation, 1.0f);
-		//	if (enemy[i].in_room == true)
-		//	{
-		//		glm::mat4 T_enemy = glm::mat4(1.0f);
-		//		glm::mat4 S_enemy = glm::mat4(1.0f);
-		//		glm::mat4 R_enemy = glm::mat4(1.0f);
-		//		glm::mat4 R_enemy4 = glm::mat4(1.0f);
-		//		T_enemy = glm::translate(T_enemy, enemy[i].t);
-		//		S_enemy = glm::scale(S_enemy, enemy[i].s);
+		// 적들
+		for (int i = 0; i < 20; i++)
+		{
+			glUniform1f(FragKindLocation, 1.0f);
+			//std::cout << std::boolalpha << enemy[i].in_room << std::endl;
+			enemy[i].in_room = GetEnemyState(i);
+			if (enemy[i].in_room)
+			{
+				glm::mat4 T_enemy = glm::mat4(1.0f);
+				glm::mat4 S_enemy = glm::mat4(1.0f);
+				glm::mat4 R_enemy = glm::mat4(1.0f);
+				enemy[i].t.x = GetEnemyX(i);
+				enemy[i].t.z = GetEnemyZ(i);
+				//std::cout << i << " | " << enemy[i].t.x << " | " << enemy[i].t.y << " | " << enemy[i].t.z << std::endl;
+				//std::cout << i << " | " << enemy[i].s.x << " | " << enemy[i].s.y << " | " << enemy[i]..z << std::endl;
+				T_enemy = glm::translate(T_enemy, enemy[i].t);
+				S_enemy = glm::scale(S_enemy, enemy[i].s);
 
-		//		if (enemy[i].kind == 4)
-		//		{
-		//			if (enemy[i].shot == true)
-		//			{
-		//				//std::cout<< enemy[i].shot <<"\n";
-		//				glm::mat4 T_enemy_bullet = glm::mat4(1.0f);
-		//				T_enemy_bullet = glm::translate(T_enemy_bullet, enemy[i].bullet_t);
-		//				all = T_enemy_bullet;
-		//				glUniform3f(objColorLocation, 1.0, 0.0, 0.0);
-		//				glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
-		//				GenShpere(enemy[i].bullet, 0, 0.1, 10);
-		//			}
+				if (enemy[i].kind == 4)
+				{
+					if (enemy[i].shot)
+					{
+						//std::cout<< enemy[i].shot <<"\n";
+						glm::mat4 T_enemy_bullet = glm::mat4(1.0f);
+						T_enemy_bullet = glm::translate(T_enemy_bullet, enemy[i].bullet_t);
+						all = T_enemy_bullet;
+						glUniform3f(objColorLocation, 1.0, 0.0, 0.0);
+						glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+						GenShpere(enemy[i].bullet, 0, 0.1, 10);
+					}
 
-		//			R_enemy = glm::rotate(R_enemy, CalculateRotate({ 0,0,1.0f }, { enemy[i].vector.x,0,enemy[i].vector.z }, true), { 0,1,0 });
-		//			R_enemy4 = glm::rotate(R_enemy4, CalculateRotate({ 0,1.0f,0 }, { enemy[i].vector.x,enemy[i].vector.y,enemy[i].vector.z }, false), { 1.0f,0.0f,0.0f });
-		//			all = T_enemy * R_enemy * R_enemy4 * S_enemy;
-		//			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
-		//		}
+					R_enemy = glm::rotate(R_enemy, enemy[i].ry, { 0,1,0 });
+					all = T_enemy * R_enemy  * S_enemy;
+					glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+				}
 
-		//		else
-		//		{
-		//			R_enemy = glm::rotate(R_enemy, CalculateRotate({ 0,0,1.0f }, enemy[i].vector, true), { 0,1,0 });
-		//			all = T_enemy * R_enemy * S_enemy;
-		//			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
-		//		}
-		//		glUniform3f(objColorLocation, 0.11, 0.33, 0.99);
-		//		glBindVertexArray(vao_enemy);
-		//		glDrawArrays(GL_TRIANGLES, 0, 36);
-		//	}
+				else
+				{
+					R_enemy = glm::rotate(R_enemy, enemy[i].ry, { 0,1,0 });
+					all = T_enemy * R_enemy * S_enemy;
+					glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+				}
+				enemy[i].ry += 0.05f;
+				glUniform3f(objColorLocation, 0.11, 0.33, 0.99);
+				glBindVertexArray(vao_enemy);
+				glDrawArrays(GL_TRIANGLES, 0, 36);
+			}
 
-		//	glUniform1f(FragKindLocation, 1.0f);
-		//	glUniform3f(objColorLocation, 1.0, 1.0, 1.0);
-		//	glEnable(GL_BLEND);
-		//	glBindTexture(GL_TEXTURE_2D, Texture_Particle);
-		//	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		//	for (int j = 0; j < 3; j++)
-		//	{
-		//		if (enemy[i].particle_pop[j])
-		//		{
-		//			for (int k = 0; k < 30; k++)
-		//			{
-		//				glm::mat4 T_particle = glm::mat4(1.0f);
-		//				glm::mat4 S_particle = glm::mat4(1.0f);
-		//				glm::mat4 Rx_particle = glm::mat4(1.0f);
-		//				glm::mat4 Ry_particle = glm::mat4(1.0f);
-		//				T_particle = glm::translate(T_particle, enemy[i].particles[j][k].t);
-		//				S_particle = glm::scale(S_particle, enemy[i].particles[j][k].s);
-		//				Ry_particle = glm::rotate(Ry_particle, CalculateRotate({ 0,0,1.0f }, { enemy[i].particles[j][k].p_vector.x,0,enemy[i].particles[j][k].p_vector.z }, true), { 0,1,0 });
-		//				all = T_particle * Ry_particle * S_particle;
-		//				glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
-		//				glBindVertexArray(vao_particle);
-		//				glDrawArrays(GL_TRIANGLES, 0, 6);
-		//			}
-		//		}
-		//	}
-		//	glBindTexture(GL_TEXTURE_2D, 0);
-		//	glDisable(GL_BLEND);
-		//}
+			glUniform1f(FragKindLocation, 1.0f);
+			glUniform3f(objColorLocation, 1.0, 1.0, 1.0);
+			glEnable(GL_BLEND);
+			glBindTexture(GL_TEXTURE_2D, Texture_Particle);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			for (int j = 0; j < 3; j++)
+			{
+				if (enemy[i].particle_pop[j])
+				{
+					for (int k = 0; k < 30; k++)
+					{
+						glm::mat4 T_particle = glm::mat4(1.0f);
+						glm::mat4 S_particle = glm::mat4(1.0f);
+						glm::mat4 Rx_particle = glm::mat4(1.0f);
+						glm::mat4 Ry_particle = glm::mat4(1.0f);
+						T_particle = glm::translate(T_particle, enemy[i].particles[j][k].t);
+						S_particle = glm::scale(S_particle, enemy[i].particles[j][k].s);
+						Ry_particle = glm::rotate(Ry_particle, CalculateRotate({ 0,0,1.0f }, { enemy[i].particles[j][k].p_vector.x,0,enemy[i].particles[j][k].p_vector.z }, true), { 0,1,0 });
+						all = T_particle * Ry_particle * S_particle;
+						glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+						glBindVertexArray(vao_particle);
+						glDrawArrays(GL_TRIANGLES, 0, 6);
+					}
+				}
+			}
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisable(GL_BLEND);
+		}
 	}
 
 	//크로스 헤어
-
 	glUniform3f(ambientLightColorLocation, 1.0, 1.0, 1.0);
 
 	glUniform1f(FragKindLocation, 0.0f);
@@ -607,7 +612,6 @@ GLvoid drawScene()
 
 	projection = glm::ortho(-4.0, 4.0, -4.0, 4.0, -4.0, 60.0);
 	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
-	//glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
 
 	//중간 방 바닥,천장
 	T_field = glm::mat4(1.0f);
@@ -639,22 +643,22 @@ GLvoid drawScene()
 		}
 	}
 
-	//for (int i = 0; i < 20; i++)
-	//{
-	//	glUniform3f(objColorLocation, 0.11, 0.33, 0.99);
-	//	if (enemy[i].in_room == true)
-	//	{
-	//		glm::mat4 T_enemy = glm::mat4(1.0f);
-	//		glm::mat4 S_enemy = glm::mat4(1.0f);
-	//		T_enemy = glm::translate(T_enemy, enemy[i].t);
-	//		S_enemy = glm::scale(S_enemy, enemy[i].s);
+	for (int i = 0; i < 20; i++)
+	{
+		glUniform3f(objColorLocation, 0.11, 0.33, 0.99);
+		if (enemy[i].in_room == true)
+		{
+			glm::mat4 T_enemy = glm::mat4(1.0f);
+			glm::mat4 S_enemy = glm::mat4(1.0f);
+			T_enemy = glm::translate(T_enemy, enemy[i].t);
+			S_enemy = glm::scale(S_enemy, enemy[i].s);
 
-	//		all = T_enemy * S_enemy;
-	//		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
-	//		glBindVertexArray(vao_enemy);
-	//		glDrawArrays(GL_TRIANGLES, 0, 36);
-	//	}
-	//}
+			all = T_enemy * S_enemy;
+			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+			glBindVertexArray(vao_enemy);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+	}
 
 	glutSwapBuffers();
 }
@@ -676,7 +680,6 @@ GLvoid TimerFunction(int value)
 
 	//Timer_CheckClear();
 
-
 	send_move_packet(player.t.x, player.t.z);
 
 	glutPostRedisplay();
@@ -687,6 +690,7 @@ GLvoid TimerFunction(int value)
 		glutTimerFunc(20, TimerFunction, 1);
 	}
 }
+
 void Timer_PlayerRun()
 {
 	// ------------이동 및 벽 충돌 체크----------------//
@@ -1105,7 +1109,6 @@ GLvoid UpKeyboard(unsigned char key, int x, int y)
 	}
 }
 
-
 GLvoid Mouse(int button, int state, int x, int y)
 {
 	if (state == GLUT_DOWN && button == GLUT_LEFT_BUTTON)
@@ -1433,12 +1436,57 @@ char* filetobuf(char* file)
 	return buf; // Return the buffer 
 }
 
+void RecvEnemyInfo () {
+	for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
+		enemy[i].in_room = true;
+		enemy[i].shot = false;
+		enemy[i].hp = GetEnemyHP(i);
+		enemy[i].kind = GetEnemyKind(i);
+		enemy[i].t.x = GetEnemyX(i);
+		enemy[i].t.y = GetEnemyY(i);
+		enemy[i].t.z = GetEnemyZ(i);
+
+		if (enemy[i].kind == 4) {
+			enemy[i].s.x = 0.4f;
+			enemy[i].s.y = 0.4f;
+			enemy[i].s.z = 0.4f;
+		}
+		else if (enemy[i].kind < 4){
+			enemy[i].s.x = (float)enemy[i].hp * 0.25f;
+			enemy[i].s.y = (float)enemy[i].hp * 0.25f;
+			enemy[i].s.z = (float)enemy[i].hp * 0.25f;
+		}
+		//std::cout << enemy[i].kind << std::endl;
+		//std::cout << enemy[i].s.x << std::endl;
+
+		for (int j = 0; j < 3; j++)
+		{
+			enemy[i].particle_pop[j] = false;
+			for (int k = 0; k < 30; k++)
+			{
+				float speed = (float)abs(dist(gen)) / 1000.0f;
+				enemy[i].particles[j][k].t = { 0,0,0 };
+				enemy[i].particles[j][k].p_vector = { 0,0,0 };
+				enemy[i].particles[j][k].time = 0;
+				enemy[i].particles[j][k].bounce_time = 0;
+				enemy[i].particles[j][k].vector = glm::normalize(glm::vec3(dist(gen), abs(dist(gen)) + 200, dist(gen)));
+				enemy[i].particles[j][k].vector = speed * enemy[i].particles[j][k].vector;
+				enemy[i].particles[j][k].s.x = (float)abs(dist(gen)) / 2000.0f + 0.05f;
+				enemy[i].particles[j][k].s.y = enemy[i].particles[j][k].s.x;
+				enemy[i].particles[j][k].s.z = enemy[i].particles[j][k].s.x;
+			}
+		}
+	}
+}
+
 int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
 	//--- 윈도우 생성하기
 	NetInit();
 	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)do_recv, (LPVOID)NULL, 0, NULL);
-	//while (!GetGameState()) {}
+
+	while (!GetGameState());
+	RecvEnemyInfo();
 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);

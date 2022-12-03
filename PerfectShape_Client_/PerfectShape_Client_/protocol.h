@@ -15,31 +15,18 @@ constexpr char SC_BULLET = 9;
 constexpr char SC_BULLETHIT = 10;
 constexpr char SC_STAGE = 11;
 constexpr char SC_PLAYERHIT = 12;
+constexpr char SC_GEN_ENEMY = 14;
 
 constexpr int PORT_NUM = 9000;
 constexpr int BUF_SIZE = 1024;
 constexpr int NAMESIZE = 20;
 
 #define MAX_BULLET_NUM 60
+#define MAX_ENEMY_NUM 20
 
 struct PlayerInfo {
-	float x{}, y{}, z{};
-	bool is_active;
-	short id;
-};
-
-struct BulletInfo {
-	bool active = false;
+	int id;
 	float x, y, z;
-	short id;
-};
-
-struct EnemyInfo {
-	bool active = false;
-	float x, y, z;
-	short type;
-	short hp;
-	short id;
 };
 
 struct CS_LOGIN_PACKET {
@@ -103,13 +90,21 @@ struct SC_ENEMY_PACKET {
 	unsigned char size;
 	char type;
 	short id;
+	float x, z;
+};
+
+struct SC_GEN_ENEMY_PACKET {
+	unsigned char size;
+	char type;
+	short id;
+	int hp;
+	int kind;
 	float x, y, z;
 };
 
 struct SC_ENERMYHIT_PACKET {
 	unsigned char size;
 	char type;
-	short hp;
 	short id;
 };
 
@@ -135,15 +130,20 @@ struct SC_STAGE_PACKET {
 struct Bullet
 {
 	float x, y, z;
-	float dx, dy, dz;
 	bool is_active;
 	bool is_team;
 
 	Bullet() 
 	{
 		x = 0; y = 0; z = 0;
-		dx = 0; dy = 0; dz = 0;
 		is_active = false;
 		is_team = false;
 	};
+};
+
+struct Enemy {
+	int hp;
+	int kind;
+	float x, y, z;
+	bool is_active;
 };
