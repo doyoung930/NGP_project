@@ -157,8 +157,17 @@ DWORD WINAPI do_recv()
                 //std::cout << id << " | " << enemy[id].x << " | " << enemy[id].z << std::endl;
                 break;
             }
-            case SC_ENERMYHIT: {
-                SC_ENERMYHIT_PACKET* packet = reinterpret_cast<SC_ENERMYHIT_PACKET*>(ptr);
+            case SC_ENEMYHIT: {
+                SC_ENEMYHIT_PACKET* packet = reinterpret_cast<SC_ENEMYHIT_PACKET*>(ptr);
+                short id = packet->id;
+                enemy[id].hp -= 1;
+                if (!enemy[id].hp) {
+                    enemy[id].is_active = false;
+                }
+                else {
+                    enemy[id].pop[enemy[id].hp] = true;
+                }
+                std::cout << id << " | " << enemy[id].hp << std::endl;
                 break;
             }
             case SC_BULLET: {
@@ -172,6 +181,8 @@ DWORD WINAPI do_recv()
             }
             case SC_BULLETHIT: {
                 SC_BULLETHIT_PACKET* packet = reinterpret_cast<SC_BULLETHIT_PACKET*>(ptr);
+                int b_id = packet->bullet_id;
+                bullets[b_id].is_active = false;
                 break;
             }
             case SC_STAGE: {
@@ -247,6 +258,10 @@ float GetEnemyZ(int id) {
 
 bool GetEnemyState(int id) {
     return enemy[id].is_active;
+}
+
+bool GetEnemyPopState(int e_id, int pop_id) {
+    return enemy[e_id].pop[pop_id];
 }
 
 void err_quit(const char* msg)

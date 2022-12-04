@@ -62,8 +62,11 @@ void send_start_packet(SOCKET*);
 void send_bullet_packet(SOCKET* c_socket, short b_id);
 void send_GenRandEnemy_packet(SOCKET* c_socket, int e_id);
 void send_enemy_packet(SOCKET* c_socket, int e_id);
+void send_bulletHit_packet(SOCKET* c_socket, short b_id);
+void send_enemyHit_packet(SOCKET* c_socket, short id);
 void GenRandEnemy(int clear_num);
 void SetEnemies();
+void CalculateEnemyDirection(int id);
 void gameStart();
 void Disconnect(SOCKET*, short);
 
@@ -145,7 +148,6 @@ int main()
 			clients[thread_count].x = -3.0f;
 			clients[thread_count].z = 3.0f;
 		}
-		
 		else if (_id == 2) {
 			clients[thread_count].x = -3.0f;
 			clients[thread_count].z = -3.0f;
@@ -173,11 +175,28 @@ int main()
 	// 메인 루프
 	while (true) {
 		DWORD retval = WaitForSingleObject(_hCalculateEvent, INFINITE);
+		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
+			if (enemy[i].is_active) {
+				CalculateEnemyDirection(i);
+				enemy[i].update();
+			}
+		}
 		// 총알 위치 이동 및 충돌 체크
 		for (int i = 0; i < MAX_BULLET_NUM; ++i) {
 			if (bullets[i].is_active) {
-				if (bullets[i].IsOut()) {
+				int result = bullets[i].ColisionCheckEnemy(enemy);
+				if (bullets[i].isOut()) {
 					bullets[i].is_active = false;
+					for(int j = 0; j < thread_count; ++j){
+						send_bulletHit_packet(&clients[j]._c_socket, i);
+					}
+				}
+				else if (result >= 0) {
+					bullets[i].is_active = false;
+					for (int j = 0; j < thread_count; ++j) {
+						send_bulletHit_packet(&clients[j]._c_socket, i);
+						send_enemyHit_packet(&clients[j]._c_socket, result);
+					}
 				}
 				else {
 					bullets[i].update();
@@ -339,6 +358,16 @@ void send_bullet_packet(SOCKET* c_socket, short b_id)
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
 
+void send_bulletHit_packet(SOCKET* c_socket, short b_id)
+{
+	SC_BULLETHIT_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_BULLETHIT;
+	p.bullet_id = b_id;
+
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
 // 죽은 플레이어 삭제함수
 void send_remove_packet(SOCKET* c_socket, short c_id)
 {
@@ -358,6 +387,16 @@ void send_enemy_packet(SOCKET* c_socket, int e_id)
 	p.id = e_id;
 	p.x = enemy[e_id].x;
 	p.z = enemy[e_id].z;
+
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
+void send_enemyHit_packet(SOCKET* c_socket, short id)
+{
+	SC_ENEMYHIT_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_ENEMYHIT;
+	p.id = id;
 
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
@@ -405,7 +444,7 @@ void SetEnemies()
 	GenRandEnemy(0);
 
 	for (int j = 0; j < thread_count; ++j) {
-		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
+		for (int i = 0; i < 5; ++i) {
 			send_GenRandEnemy_packet(&clients[j]._c_socket, i);
 		}
 	}
@@ -413,7 +452,7 @@ void SetEnemies()
 
 void GenRandEnemy(int clear_num)
 {
-	for (int i = 0; i < MAX_ENEMY_NUM; i++)
+	for (int i = 0; i < 5; i++)
 	{
 		enemy[i].is_active = true;
 		enemy[i].shot == false;
@@ -440,6 +479,20 @@ void GenRandEnemy(int clear_num)
 	}
 }
 
+void CalculateEnemyDirection(int id) {
+	float dist;
+	float min = 1000.f;
+	int c_id;
+	for (int i = 0; i < thread_count; ++i) {
+		dist = (clients[i].x - enemy[id].x) * (clients[i].x - enemy[id].x) +
+			(clients[i].z - enemy[id].z) * (clients[i].z - enemy[id].z);
+		if (min > dist) {
+			min = dist;
+			enemy[id].dx = (clients[i].x - enemy[id].x) / sqrt(min);
+			enemy[id].dz = (clients[i].z - enemy[id].z) / sqrt(min);
+		}
+	}
+}
 // 연결 해제
 void Disconnect(SOCKET* c_socket, short c_id)
 {

@@ -10,7 +10,7 @@ constexpr char SC_START = 4;
 constexpr char SC_REMOVE_PLAYER = 5;
 constexpr char SC_MOVE_PLAYER = 6;
 constexpr char SC_ENEMY = 7;
-constexpr char SC_ENERMYHIT = 8;
+constexpr char SC_ENEMYHIT = 8;
 constexpr char SC_BULLET = 9;
 constexpr char SC_BULLETHIT = 10;
 constexpr char SC_STAGE = 11;
@@ -102,7 +102,7 @@ struct SC_GEN_ENEMY_PACKET {
 	float x, y, z;
 };
 
-struct SC_ENERMYHIT_PACKET {
+struct SC_ENEMYHIT_PACKET {
 	unsigned char size;
 	char type;
 	short id;
@@ -145,5 +145,7 @@ struct Enemy {
 	int hp;
 	int kind;
 	float x, y, z;
+	bool pop[3];
+	float px, py, pz; // 파티클 원점 위치
 	bool is_active;
 };

@@ -673,15 +673,18 @@ GLvoid TimerFunction(int value)
 
 	Timer_PlayerRun();
 	//Timer_PlayerKnockBack();
-	//Timer_Enemy_Actions();
+	Timer_Enemy_Actions();
 
 	//Timer_CC_PBullect_Enemy();
 	//Timer_CC_Player_Enemy();
 
 	//Timer_CheckClear();
-
-	send_move_packet(player.t.x, player.t.z);
-
+	clock_t end = clock();
+	double time = double(end - start) / CLOCKS_PER_SEC;
+	if (time > 0.01f) {
+		start = clock();
+		send_move_packet(player.t.x, player.t.z);
+	}
 	glutPostRedisplay();
 
 	//std::cout << player.LR_dir << " "<< player.FB_dir << "\n";
@@ -793,60 +796,17 @@ void Timer_Enemy_Actions()
 {
 	for (int i = 0; i < 20; i++)// 적 움직임
 	{
-		if (enemy[i].in_room == true)
-		{
-			if (enemy[i].kind < 4)
-			{
-				enemy[i].vector = glm::normalize(glm::vec3(player.t.x, 0.0f, player.t.z) - glm::vec3(enemy[i].t.x, 0.0f, enemy[i].t.z));
-				enemy[i].t += enemy[i].speed * enemy[i].vector;
-			}
-
-			else if (enemy[i].kind == 4)
-			{
-				if (enemy[i].shot == false)
-				{
-					enemy[i].shot = true;
-					enemy[i].bullet_t = enemy[i].t;
-				}
-
-				else if (enemy[i].shot == true)
-				{
-					enemy[i].vector = glm::normalize(player.t - enemy[i].t);
-					enemy[i].bullet_t += enemy[i].speed * enemy[i].vector;
-
-					if (enemy[i].bullet_t.x > 5.0f || enemy[i].bullet_t.x < -5.0f)
-					{
-						enemy[i].shot = false;
-					}
-
-					if (enemy[i].bullet_t.y > 5.5f || enemy[i].bullet_t.y < -0.5f)
-					{
-						enemy[i].shot = false;
-					}
-
-					if (collide_sphere(enemy[i].bullet_t, player.t, 0.6))
-					{
-						if (player.hit_flag == 0)
-						{
-							player.hit_flag = 1;
-							player.hit_cnt = 0;
-							player.hit_vector = glm::normalize(glm::vec3(enemy[i].vector.x, 0.0f, enemy[i].vector.z));
-							player.hit_speed = 2.0f;
-						}
-
-						map.Change_Light = true;
-
-					}
-				}
-			}
-		}
 		//파티클
 		for (int j = 0; j < 3; j++)
-		{
+		{	
+			enemy[i].particle_pop[j] = GetEnemyPopState(i, j);
 			if (enemy[i].particle_pop[j])
 			{
 				for (int k = 0; k < 30; k++)
 				{
+					if (enemy[i].particles[j][k].time < 0.01f) {
+						enemy[i].particles[j][k].t = enemy[i].t;
+					}
 					enemy[i].particles[j][k].p_vector = player.t - enemy[i].particles[j][k].t;
 					enemy[i].particles[j][k].t += glm::vec3(enemy[i].particles[j][k].vector.x,
 						enemy[i].particles[j][k].vector.y - 0.005 * enemy[i].particles[j][k].time,
@@ -1519,13 +1479,7 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 		map.LightColor[i] = 1.0f;
 	}
 
-	clock_t end = clock();
-	double time = double(end - start) / CLOCKS_PER_SEC;
-	if (time > 0.016) {
-
-		glutDisplayFunc(drawScene);
-		start = clock();
-	}
+	glutDisplayFunc(drawScene);
 	glutKeyboardFunc(Keyboard);
 	glutKeyboardUpFunc(UpKeyboard);
 	glutMouseFunc(Mouse);
