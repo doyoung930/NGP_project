@@ -129,7 +129,7 @@ int main()
 
 	// accept 
 	// 3명 접속 확인
-	while (thread_count < 2)
+	while (thread_count < 3)
 	{
 		SOCKET c_socket = accept(s_socket, reinterpret_cast<sockaddr*>(&server_addr), &addr_size);
 		if (c_socket == INVALID_SOCKET) {
@@ -158,6 +158,7 @@ int main()
 		}
 
 		send_login_packet(&clients[thread_count]._c_socket, clients[thread_count]._id);
+
 		// 쓰레드 만들면 주석 해제
 		hThread = CreateThread(NULL, 0, Receive_Client_Packet, (LPVOID)player, 0, NULL);
 		if (hThread == NULL) { closesocket(clients[thread_count]._c_socket); }
@@ -165,10 +166,15 @@ int main()
 		thread_count++;
 	}
 
-	// 주쓰레드 생성
-	SetEnemies();
-	
+	for (int i = 0; i < thread_count; ++i) {
+		for (int j = 0; j < thread_count; ++j) {
+			if(i != j)
+				send_add_packet(&clients[i]._c_socket, j);
+		}
+	}
+
 	// 초기화 및 게임 시작
+	SetEnemies();
 	gameStart();
 	
 	// Send All 쓰레드 생성

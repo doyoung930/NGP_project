@@ -43,6 +43,7 @@ typedef struct p {
 	float hit_speed;
 	int hit_cnt;
 	int hit_flag;
+	int hp;
 
 	// 플레이어 총알
 	bool bullet_shot[shp_bullet_num];
@@ -317,6 +318,7 @@ void InitVariable()
 	player.LR_dir = 0;
 	player.room = -1;
 	player.hit_speed = 0.2f; player.hit_flag = 0; player.hit_cnt = 0;
+	player.hp = 3;
 	map.wave = true;
 	// 플레이어 총알
 	for (int i = 0; i < shp_bullet_num; i++)
@@ -448,9 +450,17 @@ GLvoid drawScene()
 		}
 	}
 
-	glUniform3f(objColorLocation, 1.0, 1.0, 0.0);
 	for (int i = 0; i < 3; ++i) {
 		if (NPlayers[i].active) {
+			if (i == 0) {
+				glUniform3f(objColorLocation, 0.95, 0.93, 0.4);
+			}
+			if (i == 1) {
+				glUniform3f(objColorLocation, 0.66, 0.25, 1.0);
+			}
+			if (i == 2) {
+				glUniform3f(objColorLocation, 0.54, 0.93, 0.51);
+			}
 			glm::mat4 T_players_bullet = glm::mat4(1.0f);
 			NPlayers[i].t.x = GetPlayerX(i);
 			NPlayers[i].t.z = GetPlayerZ(i);
@@ -486,7 +496,7 @@ GLvoid drawScene()
 		}
 		glFrontFace(GL_CCW);
 		// 총알
-		glUniform3f(objColorLocation, 0.5, 0.3, 1.0);
+		glUniform3f(objColorLocation, 1.0, 1.0, 0.0);
 		for (int i = 0; i < MAX_BULLET_NUM; i++)
 		{	
 			NetBullets[i].is_active = GetBulletState(i);
@@ -600,9 +610,64 @@ GLvoid drawScene()
 	glUniform3f(objColorLocation, 0.0, 1.0, 0.0);
 	glBindVertexArray(vao_cross);
 	glDrawArrays(GL_LINES, 0, 4);
+	// ==================================플레이어 체력===============================
+	GLUquadricObj* hp_qobj{};
+	// 내 체력
+	for (int i = 0; i < GetPlayerHP(myID); ++i) {
+		all = glm::mat4(1.0f);
+		all = glm::translate(all, glm::vec3(0.9f - 0.15f * float(i), -0.9f, 0));
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+		glUniform3f(objColorLocation, 1.0f, 0.0f, 0.0f);
+		GenShpere(hp_qobj, 1, 0.07, 5);
+	}
+	// 팀원 체력
+	int otherID[2] = {};
+	if (myID == 0) {
+		otherID[0] = 1;
+		otherID[1] = 2;
+	}
+	else if (myID == 1) {
+		otherID[0] = 0;
+		otherID[1] = 2;
+	}
+	else if (myID == 2) {
+		otherID[0] = 0;
+		otherID[1] = 1;
+	}
+	for (int c = 0; c < GetClientNum() - 1; ++c) {
 
-	//-------------------------------//
-	glViewport(width - width / 5 - 10, height - height / 5 - 80, height / 5, height / 5);
+		if (otherID[c] == 0) {
+			glUniform3f(objColorLocation, 0.95, 0.93, 0.4);
+		}
+		if (otherID[c] == 1) {
+			glUniform3f(objColorLocation, 0.66, 0.25, 1.0);
+		}
+		if (otherID[c] == 2) {
+			glUniform3f(objColorLocation, 0.54, 0.93, 0.51);
+		}
+		all = glm::mat4(1.0f);
+		all = glm::translate(all, glm::vec3(0.9f, 0.7f - 0.12f * float(c), 0));
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+		GenShpere(hp_qobj, 1, 0.05, 5);
+
+		for (int i = 0; i < GetPlayerHP(otherID[c]); ++i) {
+			all = glm::mat4(1.0f);
+			all = glm::translate(all, glm::vec3(0.75f - 0.07f * float(i), 0.7f - 0.12f * float(c), 0));
+			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+			glUniform3f(objColorLocation, 1.0f, 0.0f, 0.0f);
+			GenShpere(hp_qobj, 1, 0.03, 5);
+		}
+	}
+
+	for (int i = 0; i < GetPlayerHP(myID); ++i) {
+		all = glm::mat4(1.0f);
+		all = glm::translate(all, glm::vec3(0.9f - 0.15f * float(i), -0.9f, 0));
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
+		glUniform3f(objColorLocation, 1.0f, 0.0f, 0.0f);
+		GenShpere(hp_qobj, 1, 0.07, 5);
+	}
+	//-----------------------//
+	glViewport(width - width / 5 - 10, height - height / 5 - 10, height / 5, height / 5);
 	glUniform1f(FragKindLocation, 0.0f);
 	cameraPos = glm::vec3(0.0f, 50.0f, 0.0f);
 	cameraDirection = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -624,6 +689,15 @@ GLvoid drawScene()
 
 	glUniform3f(objColorLocation, 1.0, 1.0, 0.0);
 	for (int i = 0; i < 3; ++i) {
+		if (i == 0) {
+			glUniform3f(objColorLocation, 0.95, 0.93, 0.4);
+		}
+		if (i == 1) {
+			glUniform3f(objColorLocation, 0.66, 0.25, 1.0);
+		}
+		if (i == 2) {
+			glUniform3f(objColorLocation, 0.54, 0.93, 0.51);
+		}
 		if (NPlayers[i].active) {
 			glm::mat4 T_players = glm::mat4(1.0f);
 			NPlayers[i].t.x = GetPlayerX(i);

@@ -21,6 +21,7 @@ char recvBuf[BUF_SIZE];
 short MyID;
 bool gameStart = false;
 bool EnemySet = false;
+int login_client_num = 1;
 PlayerInfo player[3];
 Bullet bullets[MAX_BULLET_NUM];
 
@@ -117,6 +118,7 @@ DWORD WINAPI do_recv()
             }
             case SC_ADD_PLAYER: {
                 SC_ADD_PLAYER_PACKET* packet = reinterpret_cast<SC_ADD_PLAYER_PACKET*>(ptr);
+                login_client_num++;
                 break;
             }
             case SC_START: {
@@ -160,14 +162,12 @@ DWORD WINAPI do_recv()
             case SC_ENEMYHIT: {
                 SC_ENEMYHIT_PACKET* packet = reinterpret_cast<SC_ENEMYHIT_PACKET*>(ptr);
                 short id = packet->id;
+                //std::cout << id << " | " << enemy[id].hp << std::endl;
                 enemy[id].hp -= 1;
-                if (!enemy[id].hp) {
+                enemy[id].pop[enemy[id].hp] = true;
+                if (enemy[id].hp == 0) {
                     enemy[id].is_active = false;
                 }
-                else {
-                    enemy[id].pop[enemy[id].hp] = true;
-                }
-                std::cout << id << " | " << enemy[id].hp << std::endl;
                 break;
             }
             case SC_BULLET: {
@@ -191,12 +191,18 @@ DWORD WINAPI do_recv()
             }
             case SC_PLAYERHIT: {
                 SC_PLAYERHIT_PACKET* packet = reinterpret_cast<SC_PLAYERHIT_PACKET*>(ptr);
+                short id = packet->id;
+                player[id].hp -= 1;
                 break;
             }
             }
             ptr += size;
         }
     }
+}
+
+int GetClientNum() {
+    return login_client_num;
 }
 
 short GetMyPlayerID() {
@@ -213,6 +219,10 @@ float GetPlayerX(short id) {
 
 float GetPlayerZ(short id) {
     return player[int(id)].z;
+}
+
+int GetPlayerHP(short id) {
+    return player[int(id)].hp;
 }
 
 bool GetBulletState(int id) {

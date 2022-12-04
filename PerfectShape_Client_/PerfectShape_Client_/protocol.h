@@ -26,7 +26,10 @@ constexpr int NAMESIZE = 20;
 
 struct PlayerInfo {
 	int id;
+	int hp;
 	float x, y, z;
+
+	PlayerInfo() : hp{ 3 }, id{ 0 }, x{ 0.f }, y{ 0.f }, z{ 0.f } {};
 };
 
 struct CS_LOGIN_PACKET {
