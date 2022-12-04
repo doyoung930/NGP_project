@@ -1,4 +1,5 @@
 #pragma once
+#include "enemy.h"
 //Packet ID
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
@@ -10,7 +11,7 @@ constexpr char SC_START = 4;
 constexpr char SC_REMOVE_PLAYER = 5;
 constexpr char SC_MOVE_PLAYER = 6;
 constexpr char SC_ENEMY = 7;
-constexpr char SC_ENERMYHIT = 8;
+constexpr char SC_ENEMYHIT = 8;
 constexpr char SC_BULLET = 9;
 constexpr char SC_BULLETHIT = 10;
 constexpr char SC_STAGE = 11;
@@ -98,7 +99,7 @@ struct SC_GEN_ENEMY_PACKET {
 	float x, y, z;
 };
 
-struct SC_ENERMYHIT_PACKET {
+struct SC_ENEMYHIT_PACKET {
 	unsigned char size;
 	char type;
 	short id;
@@ -144,7 +145,8 @@ struct Bullet
 		z += 0.3f * dz;
 	}
 
-	bool IsOut() {
+	bool isOut()
+	{
 		if (x > 5.0f || x < -5.0f) {
 			return true;
 		}
@@ -155,5 +157,30 @@ struct Bullet
 			return true;
 		}
 		return false;
+	}
+
+	int ColisionCheckEnemy(Enemy enemy[]) 
+	{
+		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
+			if (is_team && enemy[i].is_active) {
+				float cx = enemy[i].x - x;
+				float cy = enemy[i].y - y;
+				float cz = enemy[i].z - z;
+				float dist = sqrt(cx * cx + cy * cy + cz * cz);
+				if (enemy[i].radius > dist + 0.02) {
+					is_active = false;
+					enemy[i].hp -= 1;
+					if (!enemy[i].hp) {
+						enemy[i].is_active = false;
+					}
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+
+	bool ColisionCheckClient()
+	{
 	}
 };

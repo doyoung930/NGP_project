@@ -26,4 +26,5 @@ float GetEnemyX(int id);
 float GetEnemyY(int id);
 float GetEnemyZ(int id);
 bool GetEnemyState(int id);
+bool GetEnemyPopState(int e_id,int pop_id);
 DWORD WINAPI do_recv();
