@@ -67,6 +67,10 @@ void SetEnemies();
 void gameStart();
 void Disconnect(SOCKET*, short);
 
+bool collide_sphere(glmvec3 a, glmvec3 b, float coll_dist);
+bool collide_box(glmvec3 bb, glmvec3 tb, glmvec3 bb_scale, glmvec3 tb_scale);
+bool IsCollision_PE(Enemy en, Player pl);
+
 unordered_map<short, Player>clients;
 Bullet bullets[MAX_BULLET_NUM];
 Enemy enemy[MAX_ENEMY_NUM];
@@ -181,6 +185,17 @@ int main()
 				}
 				else {
 					bullets[i].update();
+				}
+			}
+		}
+
+		// 플레이어와 적들의 충돌체크
+		for (int i{}; i < MAX_ENEMY_NUM; ++i) {
+			for (auto& pl : clients) {
+				if (enemy[i].is_active == false) continue;
+				if (IsCollision_PE(enemy[i], pl.second))
+				{
+					cout << "플레이어[" << pl.second._id << "] - 적군[" << i << "] 충돌" << endl;
 				}
 			}
 		}
@@ -487,6 +502,19 @@ bool collide_box(glmvec3 bb, glmvec3 tb, glmvec3 bb_scale, glmvec3 tb_scale)
 		bb_max.y >= tb_min.y &&
 		bb_min.z <= tb_max.z &&
 		bb_max.z >= tb_min.z)
+	{
+		return true;
+	}
+
+	return false;
+}
+
+bool IsCollision_PE(Enemy en, Player pl)
+{
+	glmvec3 en_p = { en.x, en.y, en.z };
+	glmvec3 pl_p = { pl.x, pl.y, pl.z };
+
+	if (collide_sphere(en_p, pl_p, 0.6))
 	{
 		return true;
 	}
