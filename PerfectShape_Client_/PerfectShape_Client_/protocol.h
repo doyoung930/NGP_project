@@ -3,6 +3,8 @@
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
 constexpr char CS_MOUSECLICK = 13;
+constexpr char CS_DIRECTION = 15;
+constexpr char CS_KEYBOARD = 16;
 
 constexpr char SC_LOGININFO = 2;
 constexpr char SC_ADD_PLAYER = 3;
@@ -28,14 +30,35 @@ struct PlayerInfo {
 	int id;
 	int hp;
 	float x, y, z;
+	float dx, dy, dz;
 
-	PlayerInfo() : hp{ 3 }, id{ 0 }, x{ 0.f }, y{ 0.f }, z{ 0.f } {};
+	PlayerInfo() : hp{ 3 }, id{ 0 }, x{ 0.f }, y{ 0.f }, z{ 0.f } {
+		dx = 0;
+		dy = 0;
+		dz = 0;
+	};
 };
 
 struct CS_LOGIN_PACKET {
 	char size;
 	char type;
 	char name[NAMESIZE];
+};
+
+struct CS_DIRECTION_PACKET {
+	char	size;
+	char	type;
+	short	id;
+	float	dx;
+	float	dz;
+	float	degree;
+};
+
+struct CS_KEYBOARD_PACKET {
+	char	size;
+	char	type;
+	short	id;
+	int		direction;
 };
 
 struct CS_MOVE_PACKET {

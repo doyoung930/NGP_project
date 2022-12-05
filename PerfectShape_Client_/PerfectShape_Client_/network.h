@@ -8,6 +8,8 @@ int NetInit();
 void NetCleanup();
 int send_move_packet(float x, float z);
 int send_attack_packet(float, float, float);
+int send_direction_packet(float, float,float);
+int send_keyboard_packet(int direction);
 void err_quit(const char* msg);
 void err_display(const char* msg);
 void err_display(int errcode);

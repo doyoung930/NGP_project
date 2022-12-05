@@ -67,8 +67,40 @@ int send_move_packet(float x, float z)
     p.x = x;
     p.z = z;
     //std::cout << x << " " << z << " " << std::endl;
-    send(sock, reinterpret_cast<const char*>(&p), sizeof(CS_MOVE_PACKET), 0);
+    send(sock, reinterpret_cast<const char*>(&p), sizeof(p), 0);
     
+    return retval;
+}
+
+int send_keyboard_packet(int direction)
+{
+    int retval = 0;
+
+    CS_KEYBOARD_PACKET p{};
+    p.size = sizeof(CS_KEYBOARD_PACKET);
+    p.id = MyID;
+    p.type = CS_KEYBOARD;
+    p.direction = direction;
+    //std::cout << x << " " << z << " " << std::endl;
+    send(sock, reinterpret_cast<const char*>(&p), sizeof(p), 0);
+
+    return retval;
+}
+
+int send_direction_packet(float dx, float dz,float degree)
+{
+    int retval = 0;
+
+    CS_DIRECTION_PACKET p{};
+    p.size = sizeof(CS_DIRECTION_PACKET);
+    p.id = MyID;
+    p.type = CS_DIRECTION;
+    p.dx = dx;
+    p.dz = dz;
+    p.degree = degree;
+    //std::cout << x << " " << z << " " << std::endl;
+    send(sock, reinterpret_cast<const char*>(&p), sizeof(p), 0);
+
     return retval;
 }
 

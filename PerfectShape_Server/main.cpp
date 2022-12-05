@@ -129,7 +129,7 @@ int main()
 
 	// accept 
 	// 3명 접속 확인
-	while (thread_count < 3)
+	while (thread_count < 2)
 	{
 		SOCKET c_socket = accept(s_socket, reinterpret_cast<sockaddr*>(&server_addr), &addr_size);
 		if (c_socket == INVALID_SOCKET) {
@@ -185,6 +185,10 @@ int main()
 	// 메인 루프
 	while (true) {
 		DWORD retval = WaitForSingleObject(_hCalculateEvent, INFINITE);
+		//클라 위치 업데이트
+		for (auto& pl : clients) {
+			pl.second.update();
+		}
 		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
 			if (enemy[i].is_active) {
 				CalculateEnemyDirection(i);
@@ -220,7 +224,7 @@ int main()
 				if (enemy[i].is_active == false) continue;
 				if (IsCollision_PE(enemy[i], pl.second))
 				{
-					cout << "플레이어[" << pl.second._id << "] - 적군[" << i << "] 충돌" << endl;
+					//cout << "플레이어[" << pl.second._id << "] - 적군[" << i << "] 충돌" << endl;
 				}
 			}
 		}
@@ -261,13 +265,62 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 				// 로그인 됐을 때 할일 처리
 				break;
 			}
+			case CS_KEYBOARD:
+			{
+				// 클라 키보드 입력
+				CS_KEYBOARD_PACKET* packet = reinterpret_cast<CS_KEYBOARD_PACKET*>(p);
+				int pid = packet->id;
+				int dir = packet->direction;
+				
+				switch (dir) {
+				// key down
+				case 1:
+					clients[pid].FB_Dir += 1;
+					break;
+				case 2:
+					clients[pid].LR_Dir -= 1;
+					break;
+				case 3:
+					clients[pid].FB_Dir -= 1;
+					break;
+				case 4:
+					clients[pid].LR_Dir += 1;
+					break;
+				//key up
+				case -1:
+					clients[pid].FB_Dir -= 1;
+					break;
+				case -2:
+					clients[pid].LR_Dir += 1;
+					break;
+				case -3:
+					clients[pid].FB_Dir += 1;
+					break;
+				case -4:
+					clients[pid].LR_Dir -= 1;
+					break;
+				}
+
+				cout << packet->id << "|" << clients[pid].FB_Dir << " " << clients[pid].LR_Dir <<endl;
+				break;
+			}
+			case CS_DIRECTION:
+			{
+				//클라 바라보는 방향
+				CS_DIRECTION_PACKET* packet = reinterpret_cast<CS_DIRECTION_PACKET*>(p);
+				int pid = packet->id;
+				clients[pid].dx = packet->dx;
+				clients[pid].dz = packet->dz;
+				clients[pid].view_degree = packet->degree;
+				//cout << packet->id << "|" << packet->dx << " | " << packet->dz << " | " 
+				//	<< clients[pid].view_degree << endl;
+				break;
+			}
 			case CS_MOVE:
 			{
+				//이제 없어도 됨
 				CS_MOVE_PACKET* packet = reinterpret_cast<CS_MOVE_PACKET*>(p);
 				int pid = packet->id;
-
-				float px = packet->x;
-				float pz = packet->z;
 				clients[pid].x = packet->x;
 				clients[pid].z = packet->z;
 				//cout << packet->id << "|" << packet->x << " | " << packet->z << endl;
@@ -311,8 +364,7 @@ DWORD WINAPI SendAll(LPVOID msg)
 		for (int i = 0; i < thread_count; ++i) {
 			// 클라이언트의 위치전송
 			for (int j = 0; j < thread_count; ++j) {
-				if(clients[i]._id != j)
-					send_move_packet(&clients[i]._c_socket, j);
+				send_move_packet(&clients[i]._c_socket, j);
 				//cout << "id = " << clients[i]._id << ", x = " << clients[i].x << ", z = " << clients[i].z << endl;
 			}
 			// 총알 위치 전송

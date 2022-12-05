@@ -4,6 +4,8 @@
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
 constexpr char CS_MOUSECLICK = 13;
+constexpr char CS_DIRECTION = 15;
+constexpr char CS_KEYBOARD = 16;
 
 constexpr char SC_LOGININFO = 2;
 constexpr char SC_ADD_PLAYER = 3;
@@ -39,11 +41,27 @@ struct CS_MOVE_PACKET {
 	float	z;
 };
 
+struct CS_KEYBOARD_PACKET {
+	char	size;
+	char	type;
+	short	id;
+	int		direction;
+};
+
 struct CS_MOUSECLICK_PACKET {
 	unsigned char size;
 	char type;
 	short id; // 클라이언트 아이디
 	float dx, dy, dz; // 시선 벡터(플레이어의 총알 방향)
+};
+
+struct CS_DIRECTION_PACKET {
+	char	size;
+	char	type;
+	short	id;
+	float	dx;
+	float	dz;
+	float	degree;
 };
 
 struct SC_LOGININFO_PACKET {
@@ -160,19 +178,25 @@ struct Bullet
 	}
 
 	int ColisionCheckEnemy(Enemy enemy[]) 
-	{
+	{	
 		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
 			if (is_team && enemy[i].is_active) {
+				if (!is_active) continue;
+
 				float cx = enemy[i].x - x;
 				float cy = enemy[i].y - y;
 				float cz = enemy[i].z - z;
 				float dist = sqrt(cx * cx + cy * cy + cz * cz);
-				if (enemy[i].radius > dist + 0.02) {
+				float weight = 0.02f;
+				if (enemy[i].kind == 4) weight = 0.04;
+
+				if (enemy[i].radius > dist + weight) {
 					is_active = false;
 					enemy[i].hp -= 1;
 					if (!enemy[i].hp) {
 						enemy[i].is_active = false;
 					}
+					//부딪힌 적의 아이디를 반환
 					return i;
 				}
 			}

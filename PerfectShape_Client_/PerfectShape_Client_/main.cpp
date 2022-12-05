@@ -745,19 +745,17 @@ GLvoid TimerFunction(int value)
 		view_control.UD, sin(3.141592 * view_control.LR / 180.0f) };
 	// 적 이동방향 계산 및 이동
 
-	Timer_PlayerRun();
-	//Timer_PlayerKnockBack();
+	player.t.x = GetPlayerX(myID);
+	player.t.z = GetPlayerZ(myID);
+	//Timer_PlayerRun();
 	Timer_Enemy_Actions();
 
-	//Timer_CC_PBullect_Enemy();
-	//Timer_CC_Player_Enemy();
-
-	//Timer_CheckClear();
 	clock_t end = clock();
 	double time = double(end - start) / CLOCKS_PER_SEC;
 	if (time > 0.01f) {
 		start = clock();
-		send_move_packet(player.t.x, player.t.z);
+		//send_move_packet(player.t.x, player.t.z);
+		send_direction_packet(view_control.Direction.x, view_control.Direction.z, view_control.LR);
 	}
 	glutPostRedisplay();
 
@@ -1094,26 +1092,32 @@ glm::vec3 CC_CalculateRVector(glm::vec3 input, glm::vec3 normal)
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
+
 	case 'w':
 		if (player.FB_dir <= 0) {
 			player.FB_dir += 1;
+			send_keyboard_packet(1);
 		}
 		break;
 	case 'a':
 		if (player.LR_dir >= 0) {
 			player.LR_dir -= 1;
+			send_keyboard_packet(2);
 		}
 		break;
 	case 's':
 		if (player.FB_dir >= 0) {
 			player.FB_dir -= 1;
+			send_keyboard_packet(3);
 		}
+
 		break;
 	case 'd':
 		if (player.LR_dir <= 0) {
 			player.LR_dir += 1;
-
-		}break;
+			send_keyboard_packet(4);
+		}
+		break;
 	case 'q':
 		PostQuitMessage(0);
 		break;
@@ -1127,15 +1131,19 @@ GLvoid UpKeyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
 	case 'w':
+		send_keyboard_packet(-1);
 		player.FB_dir -= 1;
 		break;
 	case 'a':
+		send_keyboard_packet(-2);
 		player.LR_dir += 1;
 		break;
 	case 's':
+		send_keyboard_packet(-3);
 		player.FB_dir += 1;
 		break;
 	case 'd':
+		send_keyboard_packet(-4);
 		player.LR_dir -= 1;
 		break;
 	default:
