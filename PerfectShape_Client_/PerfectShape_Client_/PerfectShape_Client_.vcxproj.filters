@@ -40,7 +40,10 @@
     <ClInclude Include="network.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="protocol.h">
+    <ClInclude Include="bullet.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\PerfectShape_Server\protocol.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

@@ -26,19 +26,6 @@ constexpr int NAMESIZE = 20;
 #define MAX_BULLET_NUM 60
 #define MAX_ENEMY_NUM 20
 
-struct PlayerInfo {
-	int id;
-	int hp;
-	float x, y, z;
-	float dx, dy, dz;
-
-	PlayerInfo() : hp{ 3 }, id{ 0 }, x{ 0.f }, y{ 0.f }, z{ 0.f } {
-		dx = 0;
-		dy = 0;
-		dz = 0;
-	};
-};
-
 struct CS_LOGIN_PACKET {
 	char size;
 	char type;
@@ -151,27 +138,4 @@ struct SC_STAGE_PACKET {
 	unsigned char size;
 	char type;
 	short state;
-};
-
-struct Bullet
-{
-	float x, y, z;
-	bool is_active;
-	bool is_team;
-
-	Bullet() 
-	{
-		x = 0; y = 0; z = 0;
-		is_active = false;
-		is_team = false;
-	};
-};
-
-struct Enemy {
-	int hp;
-	int kind;
-	float x, y, z;
-	bool pop[3];
-	float px, py, pz; // 파티클 원점 위치
-	bool is_active;
 };
