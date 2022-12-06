@@ -19,6 +19,13 @@ Player::Player(SOCKET& socket, short id): _c_socket(socket), _id(id)
 	speed = 0.0525f;
 	view_degree = 0;
 	_in_use = false;
+	hp = 3;
+	_hx = 0;
+	_hy = 0;
+	_hz = 0;
+	_is_hit = false;
+	_hit_cnt = 0;
+	_hit_speed = 2.f;
 }
 Player::~Player()
 {

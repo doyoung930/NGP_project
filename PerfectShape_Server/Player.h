@@ -17,5 +17,10 @@ public:
 	int		FB_Dir;
 	int		LR_Dir;
 	bool	_in_use;
+	short	hp;
+	float	_hx, _hy, _hz;
+	bool	_is_hit;
+	int		_hit_cnt;
+	float	_hit_speed;
 };
 

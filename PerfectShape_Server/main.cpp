@@ -64,6 +64,7 @@ void send_GenRandEnemy_packet(SOCKET* c_socket, int e_id);
 void send_enemy_packet(SOCKET* c_socket, int e_id);
 void send_bulletHit_packet(SOCKET* c_socket, short b_id);
 void send_enemyHit_packet(SOCKET* c_socket, short id);
+void send_hit_packet(SOCKET* c_socket, short c_id);
 void GenRandEnemy(int clear_num);
 void SetEnemies();
 void CalculateEnemyDirection(int id);
@@ -73,6 +74,7 @@ void Disconnect(SOCKET*, short);
 bool collide_sphere(glmvec3 a, glmvec3 b, float coll_dist);
 bool collide_box(glmvec3 bb, glmvec3 tb, glmvec3 bb_scale, glmvec3 tb_scale);
 bool IsCollision_PE(Enemy en, Player pl);
+void Player_KnockBack(short id);
 
 unordered_map<short, Player>clients;
 Bullet bullets[MAX_BULLET_NUM];
@@ -164,6 +166,8 @@ int main()
 		if (hThread == NULL) { closesocket(clients[thread_count]._c_socket); }
 		else { CloseHandle(hThread); }
 		thread_count++;
+
+		break;
 	}
 
 	for (int i = 0; i < thread_count; ++i) {
@@ -222,11 +226,31 @@ int main()
 		for (int i{}; i < MAX_ENEMY_NUM; ++i) {
 			for (auto& pl : clients) {
 				if (enemy[i].is_active == false) continue;
-				if (IsCollision_PE(enemy[i], pl.second))
+				if (IsCollision_PE(enemy[i], pl.second) && !pl.second._is_hit)
 				{
-					//cout << "플레이어[" << pl.second._id << "] - 적군[" << i << "] 충돌" << endl;
+					pl.second.hp -= 1;
+					pl.second._is_hit = true;
+					pl.second._hx = -pl.second.dx;
+					pl.second._hz = -pl.second.dz;
+					cout << "플레이어[" << pl.second._id << "] - 적[" << i << "] 충돌" << endl;
+					cout << "x = " << pl.second._hx << ", z = " << pl.second._hz << endl;
+					// 맞았다는 사실을 sendall에 안 둔 이유
+					// 동기화가 딱히 필요 없음(자기 자신에게만 알려주면 됨)
+					send_hit_packet(&pl.second._c_socket, pl.second._id);
+					if (pl.second.hp <= 0)
+					{
+						// 임시 방편 -> 삭제 작업 해야함
+						pl.second._in_use = false;
+						continue;
+					}
 				}
 			}
+		}
+
+		// 맞는 상태에 있는 클라이언트 찾아서 처리
+		for (auto& pl : clients) {
+			if (pl.second._is_hit)
+				Player_KnockBack(pl.second._id);
 		}
 		SetEvent(_hSendEvent);
 	}
@@ -301,7 +325,7 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 					break;
 				}
 
-				cout << packet->id << "|" << clients[pid].FB_Dir << " " << clients[pid].LR_Dir <<endl;
+				//cout << packet->id << "|" << clients[pid].FB_Dir << " " << clients[pid].LR_Dir <<endl;
 				break;
 			}
 			case CS_DIRECTION:
@@ -474,6 +498,16 @@ void send_enemyHit_packet(SOCKET* c_socket, short id)
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
 
+void send_hit_packet(SOCKET* c_socket, short c_id)
+{
+	SC_PLAYERHIT_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_PLAYERHIT;
+	p.id = c_id;		// 왜 있는거지?
+
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
 void send_GenRandEnemy_packet(SOCKET* c_socket, int e_id)
 {
 	SC_GEN_ENEMY_PACKET p;
@@ -624,11 +658,35 @@ bool IsCollision_PE(Enemy en, Player pl)
 {
 	glmvec3 en_p = { en.x, en.y, en.z };
 	glmvec3 pl_p = { pl.x, pl.y, pl.z };
+	glmvec3 en_s = { en.radius, en.radius, en.radius };
 
-	if (collide_sphere(en_p, pl_p, 0.6))
+	if (collide_box(en_p, pl_p, { 0.8f, 0.8f, 0.8f }, en_s))
 	{
 		return true;
 	}
 
 	return false;
+}
+
+void Player_KnockBack(short id)
+{
+	clients[id].x = clients[id].x + 0.1f * clients[id]._hx;
+	clients[id].y = clients[id].y + 0.1f * clients[id]._hy;
+	clients[id].z = clients[id].z + 0.1f * clients[id]._hz;
+
+	// 코드 보니까 문이랑 충돌도 해놨던 것 같음
+
+	clients[id]._hit_speed -= clients[id]._hit_speed * 0.3f;
+
+	clients[id]._hit_cnt += 1;
+
+	cout << "id = " << id << ", x = " << clients[id].x << ", z = " << clients[id].z << endl;
+
+	if (clients[id]._hit_cnt >= 20)
+	{
+		cout << "들어옴" << endl;
+		clients[id]._is_hit = false;
+		clients[id]._hit_cnt = 0;
+		clients[id]._hit_speed = 2.f;
+	}
 }
