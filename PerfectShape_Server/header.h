@@ -10,5 +10,6 @@ using namespace std;
 
 #pragma comment (lib,"WS2_32.LIB")
 
-
-
+struct glmvec3 {
+	float x, y, z;
+};

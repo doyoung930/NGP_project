@@ -1,7 +1,9 @@
+#pragma once
 #include "header.h"
 #include "Player.h"
 #include "enemy.h"
 #include "bullet.h"
+#include "Map.h"
 
 std::random_device rd;
 std::mt19937 gen(rd());
@@ -38,10 +40,6 @@ void err_quit(const char* msg)
 	exit(1);
 }
 
-struct glmvec3 { 
-	float x, y, z;
-};
-
 //전역 변수
 HANDLE hThread;
 HANDLE _hSendEvent;
@@ -77,10 +75,13 @@ bool collide_box(glmvec3 bb, glmvec3 tb, glmvec3 bb_scale, glmvec3 tb_scale);
 bool IsCollision_PE(Enemy en, Player pl);
 void Player_KnockBack(short id);
 void Player_Check_Unbeatable(short id, chrono::system_clock::time_point start_time);
+glmvec3 CC_CalculateRVector(glmvec3 input, glmvec3 normal);
 
 unordered_map<short, Player>clients;
 Bullet bullets[MAX_BULLET_NUM];
 Enemy enemy[MAX_ENEMY_NUM];
+
+Map map;
 
 //--------
 int main()
@@ -687,15 +688,43 @@ bool IsCollision_PE(Enemy en, Player pl)
 	return false;
 }
 
+glmvec3 CC_CalculateRVector(glmvec3 input, glmvec3 normal)
+{
+	float dotvec{ normal.x * input.x + normal.y * input.y + normal.z * input.z };
+	glmvec3 ret{ input.x - 2.0f * dotvec * normal.x, input.y - 2.0f * dotvec * normal.y, input.z - 2.0f * dotvec * normal.z };
+	return ret;
+}
+
 void Player_KnockBack(short id)
 {
 	clients[id].x = clients[id].x + 0.1f * clients[id]._hx;
 	clients[id].y = clients[id].y + 0.1f * clients[id]._hy;
 	clients[id].z = clients[id].z + 0.1f * clients[id]._hz;
 
-	// 코드 보니까 문이랑 충돌도 해놨던 것 같음
+	glmvec3 plp{ clients[id].x, clients[id].y, clients[id].z };
 
-	clients[id]._hit_speed -= clients[id]._hit_speed * 0.3f;
+	// 벽이랑 충돌
+	for (int i{}; i < 4; ++i)
+	{
+		for (int j{}; j < 10; ++j)
+		{
+			if (collide_box(plp, map.pillar_t[i][j], { 1.0f, 1.0f, 1.0f }, map.pillar_s))
+			{
+				clients[id].x -= clients[id]._hit_speed * clients[id]._hx;
+				clients[id].y -= clients[id]._hit_speed * clients[id]._hy;
+				clients[id].z -= clients[id]._hit_speed * clients[id]._hz;
+				
+				glmvec3 hitvec{ clients[id]._hx, clients[id]._hy, clients[id]._hz };
+				clients[id]._hx = CC_CalculateRVector(hitvec, map.pillar_normal[i]).x;
+				clients[id]._hy = CC_CalculateRVector(hitvec, map.pillar_normal[i]).y;
+				clients[id]._hz = CC_CalculateRVector(hitvec, map.pillar_normal[i]).z;
+
+				break;
+			}
+		}
+	}
+
+	clients[id]._hit_speed -= clients[id]._hit_speed * 0.1f;
 
 	clients[id]._hit_cnt += 1;
 
@@ -705,7 +734,7 @@ void Player_KnockBack(short id)
 	{
 		clients[id]._is_hit = false;
 		clients[id]._hit_cnt = 0;
-		clients[id]._hit_speed = 2.f;
+		clients[id]._hit_speed = 0.2f;
 		send_hitend_packet(&clients[id]._c_socket, clients[id]._id);
 	}
 }
