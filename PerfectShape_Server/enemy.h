@@ -8,7 +8,7 @@ public:
 	float speed;
 	float radius;
 	float x, y, z;
-	float dx, dz;
+	float dx, dy,dz;
 	bool is_active;
 	bool shot;
 	bool pop[3];

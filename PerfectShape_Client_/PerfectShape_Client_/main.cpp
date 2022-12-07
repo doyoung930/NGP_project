@@ -579,6 +579,7 @@ GLvoid drawScene()
 						glm::mat4 S_particle = glm::mat4(1.0f);
 						glm::mat4 Rx_particle = glm::mat4(1.0f);
 						glm::mat4 Ry_particle = glm::mat4(1.0f);
+
 						T_particle = glm::translate(T_particle, enemy[i].particles[j][k].t);
 						S_particle = glm::scale(S_particle, enemy[i].particles[j][k].s);
 						Ry_particle = glm::rotate(Ry_particle, CalculateRotate({ 0,0,1.0f }, { enemy[i].particles[j][k].p_vector.x,0,enemy[i].particles[j][k].p_vector.z }, true), { 0,1,0 });
