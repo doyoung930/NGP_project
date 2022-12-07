@@ -4,6 +4,7 @@
 #include "enemy.h"
 #include "bullet.h"
 #include "Map.h"
+#include "physics.h"
 
 std::random_device rd;
 std::mt19937 gen(rd());
@@ -70,12 +71,11 @@ void CalculateEnemyDirection(int id);
 void gameStart();
 void Disconnect(SOCKET*, short);
 
-bool collide_sphere(glmvec3 a, glmvec3 b, float coll_dist);
-bool collide_box(glmvec3 bb, glmvec3 tb, glmvec3 bb_scale, glmvec3 tb_scale);
 bool IsCollision_PE(Enemy en, Player pl);
 void Player_KnockBack(short id);
 void Player_Check_Unbeatable(short id, chrono::system_clock::time_point start_time);
-glmvec3 CC_CalculateRVector(glmvec3 input, glmvec3 normal);
+
+bool Player_Check_Touch_Wall(short id);
 
 unordered_map<short, Player>clients;
 Bullet bullets[MAX_BULLET_NUM];
@@ -193,6 +193,11 @@ int main()
 		//클라 위치 업데이트
 		for (auto& pl : clients) {
 			pl.second.update();
+			//벽에 닿았나 체크
+			if (Player_Check_Touch_Wall(pl.second._id)) {
+				// 닿았으면 이동 취소
+				pl.second.undo();
+			}
 		}
 		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
 			if (enemy[i].is_active) {
@@ -634,46 +639,6 @@ void Disconnect(SOCKET* c_socket, short c_id)
 	closesocket(clients[c_id]._c_socket);
 }
 
-bool collide_sphere(glmvec3 a, glmvec3 b, float coll_dist)
-{
-	glmvec3 c;
-	c.x = a.x - b.x;
-	c.y = a.y - b.y;
-	c.z = a.z - b.z;
-
-	float dist = sqrt(c.x * c.x + c.y * c.y + c.z * c.z);
-
-	if (coll_dist > dist)
-	{
-		return true;
-	}
-
-	return false;
-}
-
-bool collide_box(glmvec3 bb, glmvec3 tb, glmvec3 bb_scale, glmvec3 tb_scale)
-{
-	float size = 0.5;
-
-	glmvec3 bb_min = { bb.x - size * bb_scale.x,bb.y - size * bb_scale.y,bb.z - size * bb_scale.z };
-	glmvec3 bb_max = { bb.x + size * bb_scale.x,bb.y + size * bb_scale.y,bb.z + size * bb_scale.z };
-
-	glmvec3 tb_min = { tb.x - size * tb_scale.x ,tb.y - size * tb_scale.y,tb.z - size * tb_scale.z };
-	glmvec3 tb_max = { tb.x + size * tb_scale.x,tb.y + size * tb_scale.y,tb.z + size * tb_scale.z };
-
-	if (bb_min.x <= tb_max.x &&
-		bb_max.x >= tb_min.x &&
-		bb_min.y <= tb_max.y &&
-		bb_max.y >= tb_min.y &&
-		bb_min.z <= tb_max.z &&
-		bb_max.z >= tb_min.z)
-	{
-		return true;
-	}
-
-	return false;
-}
-
 bool IsCollision_PE(Enemy en, Player pl)
 {
 	glmvec3 en_p = { en.x, en.y, en.z };
@@ -686,13 +651,6 @@ bool IsCollision_PE(Enemy en, Player pl)
 	}
 
 	return false;
-}
-
-glmvec3 CC_CalculateRVector(glmvec3 input, glmvec3 normal)
-{
-	float dotvec{ normal.x * input.x + normal.y * input.y + normal.z * input.z };
-	glmvec3 ret{ input.x - 2.0f * dotvec * normal.x, input.y - 2.0f * dotvec * normal.y, input.z - 2.0f * dotvec * normal.z };
-	return ret;
 }
 
 void Player_KnockBack(short id)
@@ -747,4 +705,21 @@ void Player_Check_Unbeatable(short id, chrono::system_clock::time_point start_ti
 	{
 		clients[id]._is_unbeatable = false;
 	}
+}
+
+bool Player_Check_Touch_Wall(short id)
+{
+	glmvec3 plp{ clients[id].x, clients[id].y, clients[id].z };
+
+	for (int i{}; i < 4; ++i)
+	{
+		for (int j{}; j < 10; ++j)
+		{
+			if (collide_box(plp, map.pillar_t[i][j], { 1.0f, 1.0f, 1.0f }, map.pillar_s))
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 }

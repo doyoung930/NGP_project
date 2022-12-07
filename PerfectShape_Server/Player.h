@@ -1,5 +1,6 @@
 #pragma once
 #include "header.h"
+
 class Player
 {
 public:
@@ -7,6 +8,7 @@ public:
 	Player(SOCKET& socket, short id);
 	~Player();
 	void update();
+	void undo();
 public:
 	SOCKET	_c_socket;
 	short	_id;
