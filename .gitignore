@@ -4,6 +4,11 @@ PerfectShape_Server/.vs/
 PerfectShape_Client/x64/
 PerfectShape_Client_/x64/
 PerfectShape_Server/x64/
+PerfectShape_Client/Debug/
+PerfectShape_Client_/Debug/
+PerfectShape_Server/Debug/
+PerfectShape_Client_/PerfectShape_Client_/x64/
+PerfectShape_Client_/PerfectShape_Client_/Debug/
 *.exe 
 *.ilk 
 *.pdb 
