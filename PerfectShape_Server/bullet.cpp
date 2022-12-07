@@ -9,9 +9,9 @@ Bullet::Bullet()
 };
 
 void Bullet::update() {
-	x += 0.3f * dx;
-	y += 0.3f * dy;
-	z += 0.3f * dz;
+	x += speed * dx;
+	y += speed * dy;
+	z += speed * dz;
 }
 
 bool Bullet::isOut()

@@ -68,6 +68,7 @@ void send_hitend_packet(SOCKET* c_socket, short c_id);
 void GenRandEnemy(int clear_num);
 void SetEnemies();
 void CalculateEnemyDirection(int id);
+void InitEnemyBullet();
 void gameStart();
 void Disconnect(SOCKET*, short);
 
@@ -199,33 +200,64 @@ int main()
 				pl.second.undo();
 			}
 		}
+
 		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
 			if (enemy[i].is_active) {
 				CalculateEnemyDirection(i);
 				enemy[i].update();
 			}
 		}
+		InitEnemyBullet();
+
 		// 총알 위치 이동 및 충돌 체크
 		for (int i = 0; i < MAX_BULLET_NUM; ++i) {
-			if (bullets[i].is_active) {
-				int result = bullets[i].ColisionCheckEnemy(enemy);
-				if (bullets[i].isOut()) {
-					bullets[i].is_active = false;
-					for(int j = 0; j < thread_count; ++j){
-						send_bulletHit_packet(&clients[j]._c_socket, i);
-					}
+			if (!bullets[i].is_active) continue;
+
+			int result = bullets[i].ColisionCheckEnemy(enemy);
+			if (bullets[i].isOut()) {
+				bullets[i].is_active = false;
+				if (!bullets[i].is_team) {
+					enemy[bullets[i].enemyID].shot = false;
 				}
-				else if (result >= 0) {
-					bullets[i].is_active = false;
-					for (int j = 0; j < thread_count; ++j) {
-						send_bulletHit_packet(&clients[j]._c_socket, i);
-						send_enemyHit_packet(&clients[j]._c_socket, result);
-					}
-				}
-				else {
-					bullets[i].update();
+				for (int j = 0; j < thread_count; ++j) {
+					send_bulletHit_packet(&clients[j]._c_socket, i);
 				}
 			}
+			else if (!bullets[i].is_team) { // 적 총알 - 아군 충돌체크
+				for (auto& pl : clients) {
+					if (collide_sphere({ bullets[i].x ,bullets[i].y , bullets[i].z },
+						{ pl.second.x ,pl.second.y ,pl.second.z }, 0.4f && !pl.second._is_unbeatable)) {// 클라 - 적 총알 충돌처리
+						pl.second._unbeatable_time = chrono::system_clock::now();
+						pl.second.hp -= 1;
+						pl.second._is_hit = true;
+						pl.second._is_unbeatable = true;
+						pl.second._hx = bullets[i].dx / sqrt((bullets[i].dx * bullets[i].dx) + (bullets[i].dz * bullets[i].dz));
+						pl.second._hz = bullets[i].dz / sqrt((bullets[i].dx * bullets[i].dx) + (bullets[i].dz * bullets[i].dz));
+						bullets[i].is_active = false;
+
+						//cout << "플레이어[" << pl.second._id << "] - 적[" << i << "] 충돌" << endl;
+						//cout << "x = " << pl.second._hx << ", z = " << pl.second._hz << endl;
+						for (int i{}; i < thread_count; ++i)
+							send_hit_packet(&clients[i]._c_socket, pl.second._id);
+
+						if (pl.second.hp <= 0)
+						{
+							// 임시 방편 -> 삭제 작업 해야함
+							pl.second._in_use = false;
+							continue;
+						}
+						break;
+					}
+				}
+			}
+			else if (result >= 0) { // 아군 총알 - 적 충돌체크
+				bullets[i].is_active = false;
+				for (int j = 0; j < thread_count; ++j) {
+					send_bulletHit_packet(&clients[j]._c_socket, i);
+					send_enemyHit_packet(&clients[j]._c_socket, result);
+				}
+			}
+			bullets[i].update();
 		}
 
 		// 플레이어와 적들의 충돌체크
@@ -238,8 +270,8 @@ int main()
 					pl.second.hp -= 1;
 					pl.second._is_hit = true;
 					pl.second._is_unbeatable = true;
-					pl.second._hx = -pl.second.dx;
-					pl.second._hz = -pl.second.dz;
+					pl.second._hx = enemy[i].dx;
+					pl.second._hz = enemy[i].dz;
 					//cout << "플레이어[" << pl.second._id << "] - 적[" << i << "] 충돌" << endl;
 					//cout << "x = " << pl.second._hx << ", z = " << pl.second._hz << endl;
 					
@@ -382,6 +414,7 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 						bullets[i].dx = packet->dx;
 						bullets[i].dy = packet->dy;
 						bullets[i].dz = packet->dz; 
+						bullets[i].speed = 0.3f;
 						break;
 					}
 				}
@@ -616,12 +649,48 @@ void CalculateEnemyDirection(int id)
 	float min = 1000.f;
 	int c_id;
 	for (int i = 0; i < thread_count; ++i) {
-		dist = (clients[i].x - enemy[id].x) * (clients[i].x - enemy[id].x) +
-			(clients[i].z - enemy[id].z) * (clients[i].z - enemy[id].z);
-		if (min > dist) {
-			min = dist;
-			enemy[id].dx = (clients[i].x - enemy[id].x) / sqrt(min);
-			enemy[id].dz = (clients[i].z - enemy[id].z) / sqrt(min);
+		if (enemy[id].kind == 4) {
+			dist = (clients[i].x - enemy[id].x) * (clients[i].x - enemy[id].x) + (clients[i].y - enemy[id].y) * (clients[i].y - enemy[id].y)
+				+ (clients[i].z - enemy[id].z) * (clients[i].z - enemy[id].z);
+			if (min > dist) {
+				min = dist;
+				enemy[id].dx = (clients[i].x - enemy[id].x) / sqrt(min);
+				enemy[id].dy = (clients[i].y - enemy[id].y) / sqrt(min);
+				enemy[id].dz = (clients[i].z - enemy[id].z) / sqrt(min);
+			}
+		}
+		else {
+			dist = (clients[i].x - enemy[id].x) * (clients[i].x - enemy[id].x) +
+				(clients[i].z - enemy[id].z) * (clients[i].z - enemy[id].z);
+			if (min > dist) {
+				min = dist;
+				enemy[id].dx = (clients[i].x - enemy[id].x) / sqrt(min);
+				enemy[id].dz = (clients[i].z - enemy[id].z) / sqrt(min);
+			}
+		}
+	}
+}
+void InitEnemyBullet() {
+	for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
+		if (!enemy[i].is_active || enemy[i].shot) continue;
+
+		for (int j = 0; j < MAX_BULLET_NUM; ++j) {
+			if (!bullets[j].is_active && enemy[i].kind == 4) {
+				bullets[j].is_active = true;
+				bullets[j].is_team = false;
+				enemy[i].shot = true;
+
+				bullets[j].x = enemy[i].x;
+				bullets[j].y = enemy[i].y;
+				bullets[j].z = enemy[i].z;
+
+				bullets[j].dx = enemy[i].dx;
+				bullets[j].dy = enemy[i].dy;
+				bullets[j].dz = enemy[i].dz;
+				bullets[j].enemyID = i;
+				bullets[j].speed = 0.1f;
+				break;
+			}
 		}
 	}
 }

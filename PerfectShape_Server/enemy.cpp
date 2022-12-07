@@ -6,8 +6,4 @@ void Enemy::update()
 		x += speed * dx;
 		z += speed * dz;
 	}
-
-	else if (kind == 4) {
-
-	}
 }
