@@ -535,7 +535,7 @@ void send_remove_packet(SOCKET* c_socket, short c_id)
 	p.type = SC_REMOVE_PLAYER;
 	p.id = c_id;
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
-	cout << "login packet º¸³¿" << endl;
+	//cout << "packet º¸³¿" << endl;
 }
 
 void send_enemy_packet(SOCKET* c_socket, int e_id)
