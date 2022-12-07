@@ -3,7 +3,8 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS 
 
 #include "network.h"
-#include "protocol.h"
+#include "../../PerfectShape_Server/protocol.h"
+#include "bullet.h"
 #include <iostream>
 #include <tchar.h>
 #include <stdio.h>
@@ -17,6 +18,31 @@ WSADATA wsa;
 SOCKET sock;
 SOCKADDR_IN serveraddr;
 char recvBuf[BUF_SIZE];
+
+struct PlayerInfo {
+    int id;
+    int hp;
+    float x, y, z;
+    float dx, dy, dz;
+
+    bool is_hit;
+
+    PlayerInfo() : hp{ 3 }, id{ 0 }, x{ 0.f }, y{ 0.f }, z{ 0.f } {
+        dx = 0;
+        dy = 0;
+        dz = 0;
+    };
+};
+
+struct Enemy {
+    int hp;
+    int kind;
+    float x, y, z;
+    bool pop[3];
+    float px, py, pz; // 파티클 원점 위치
+    bool is_active;
+};
+
 
 short MyID;
 bool gameStart = false;
@@ -225,7 +251,16 @@ DWORD WINAPI do_recv()
                 SC_PLAYERHIT_PACKET* packet = reinterpret_cast<SC_PLAYERHIT_PACKET*>(ptr);
                 short id = packet->id;
                 player[id].hp -= 1;
+                if (id == MyID)
+                {
+                    player[id].is_hit = true;
+                }
                 break;
+            }
+            case SC_HITEND: {
+                SC_HITEND_PACKET* packet = reinterpret_cast<SC_HITEND_PACKET*>(ptr);
+                short id = packet->id;
+                player[id].is_hit = false;
             }
             }
             ptr += size;
@@ -304,6 +339,11 @@ bool GetEnemyState(int id) {
 
 bool GetEnemyPopState(int e_id, int pop_id) {
     return enemy[e_id].pop[pop_id];
+}
+
+bool GetisHit(int p_id)
+{
+    return player[p_id].is_hit;
 }
 
 void err_quit(const char* msg)

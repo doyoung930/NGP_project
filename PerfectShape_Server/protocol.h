@@ -1,5 +1,4 @@
 #pragma once
-#include "enemy.h"
 //Packet ID
 constexpr char CS_LOGIN = 0;
 constexpr char CS_MOVE = 1;
@@ -19,6 +18,7 @@ constexpr char SC_BULLETHIT = 10;
 constexpr char SC_STAGE = 11;
 constexpr char SC_PLAYERHIT = 12;
 constexpr char SC_GEN_ENEMY = 14;
+constexpr char SC_HITEND = 17;
 
 constexpr int PORT_NUM = 9000;
 constexpr int BUF_SIZE = 256;
@@ -26,20 +26,6 @@ constexpr int NAMESIZE = 20;
 
 #define MAX_BULLET_NUM 60
 #define MAX_ENEMY_NUM 20
-
-struct PlayerInfo {
-	int id;
-	int hp;
-	float x, y, z;
-	float dx, dy, dz;
-
-	PlayerInfo() : hp{ 3 }, id{ 0 }, x{ 0.f }, y{ 0.f }, z{ 0.f } {
-		dx = 0;
-		dy = 0;
-		dz = 0;
-	};
-};
-
 
 struct CS_LOGIN_PACKET {
 	char size;
@@ -55,15 +41,6 @@ struct CS_MOVE_PACKET {
 	float	z;
 };
 
-struct CS_DIRECTION_PACKET {
-	char	size;
-	char	type;
-	short	id;
-	float	dx;
-	float	dz;
-	float	degree;
-};
-
 struct CS_KEYBOARD_PACKET {
 	char	size;
 	char	type;
@@ -77,12 +54,14 @@ struct CS_MOUSECLICK_PACKET {
 	short id; // 클라이언트 아이디
 	float dx, dy, dz; // 시선 벡터(플레이어의 총알 방향)
 };
-struct CS_MOVE_PACKET {
+
+struct CS_DIRECTION_PACKET {
 	char	size;
 	char	type;
 	short	id;
-	float	x;
-	float	z;
+	float	dx;
+	float	dz;
+	float	degree;
 };
 
 struct SC_LOGININFO_PACKET {
@@ -163,69 +142,8 @@ struct SC_STAGE_PACKET {
 	short state;
 };
 
-struct Bullet
-{
-	float x, y, z;
-	float dx, dy, dz;
-	bool is_active;
-	bool is_team;
-
-	Bullet()
-	{
-		x = 0; y = 0; z = 0;
-		dx = 0; dy = 0; dz = 0;
-		is_active = false;
-		is_team = false;
-	};
-
-	void update() {
-		x += 0.3f * dx;
-		y += 0.3f * dy;
-		z += 0.3f * dz;
-	}
-
-	bool isOut()
-	{
-		if (x > 5.0f || x < -5.0f) {
-			return true;
-		}
-		if (y > 10.0f || y < -1.0f) {
-			return true;
-		}
-		if (z > 5.0f || z < -5.0f) {
-			return true;
-		}
-		return false;
-	}
-
-	int ColisionCheckEnemy(Enemy enemy[]) 
-	{	
-		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
-			if (is_team && enemy[i].is_active) {
-				if (!is_active) continue;
-
-				float cx = enemy[i].x - x;
-				float cy = enemy[i].y - y;
-				float cz = enemy[i].z - z;
-				float dist = sqrt(cx * cx + cy * cy + cz * cz);
-				float weight = 0.02f;
-				if (enemy[i].kind == 4) weight = 0.04;
-
-				if (enemy[i].radius > dist + weight) {
-					is_active = false;
-					enemy[i].hp -= 1;
-					if (!enemy[i].hp) {
-						enemy[i].is_active = false;
-					}
-					//부딪힌 적의 아이디를 반환
-					return i;
-				}
-			}
-		}
-		return -1;
-	}
-
-	bool ColisionCheckClient()
-	{
-	}
+struct SC_HITEND_PACKET {
+	unsigned char size;
+	char type;
+	short id;
 };

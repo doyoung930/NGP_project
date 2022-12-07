@@ -65,6 +65,7 @@ void send_enemy_packet(SOCKET* c_socket, int e_id);
 void send_bulletHit_packet(SOCKET* c_socket, short b_id);
 void send_enemyHit_packet(SOCKET* c_socket, short id);
 void send_hit_packet(SOCKET* c_socket, short c_id);
+void send_hitend_packet(SOCKET* c_socket, short c_id);
 void GenRandEnemy(int clear_num);
 void SetEnemies();
 void CalculateEnemyDirection(int id);
@@ -75,6 +76,74 @@ bool collide_sphere(glmvec3 a, glmvec3 b, float coll_dist);
 bool collide_box(glmvec3 bb, glmvec3 tb, glmvec3 bb_scale, glmvec3 tb_scale);
 bool IsCollision_PE(Enemy en, Player pl);
 void Player_KnockBack(short id);
+
+
+struct Bullet
+{
+	float x, y, z;
+	float dx, dy, dz;
+	bool is_active;
+	bool is_team;
+
+	Bullet()
+	{
+		x = 0; y = 0; z = 0;
+		dx = 0; dy = 0; dz = 0;
+		is_active = false;
+		is_team = false;
+	};
+
+	void update() {
+		x += 0.3f * dx;
+		y += 0.3f * dy;
+		z += 0.3f * dz;
+	}
+
+	bool isOut()
+	{
+		if (x > 5.0f || x < -5.0f) {
+			return true;
+		}
+		if (y > 10.0f || y < -1.0f) {
+			return true;
+		}
+		if (z > 5.0f || z < -5.0f) {
+			return true;
+		}
+		return false;
+	}
+
+	int ColisionCheckEnemy(Enemy enemy[])
+	{
+		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
+			if (is_team && enemy[i].is_active) {
+				if (!is_active) continue;
+
+				float cx = enemy[i].x - x;
+				float cy = enemy[i].y - y;
+				float cz = enemy[i].z - z;
+				float dist = sqrt(cx * cx + cy * cy + cz * cz);
+				float weight = 0.02f;
+				if (enemy[i].kind == 4) weight = 0.04;
+
+				if (enemy[i].radius > dist + weight) {
+					is_active = false;
+					enemy[i].hp -= 1;
+					if (!enemy[i].hp) {
+						enemy[i].is_active = false;
+					}
+					//부딪힌 적의 아이디를 반환
+					return i;
+				}
+			}
+		}
+		return -1;
+	}
+
+	bool ColisionCheckClient()
+	{
+	}
+};
 
 unordered_map<short, Player>clients;
 Bullet bullets[MAX_BULLET_NUM];
@@ -166,8 +235,6 @@ int main()
 		if (hThread == NULL) { closesocket(clients[thread_count]._c_socket); }
 		else { CloseHandle(hThread); }
 		thread_count++;
-
-		break;
 	}
 
 	for (int i = 0; i < thread_count; ++i) {
@@ -232,11 +299,12 @@ int main()
 					pl.second._is_hit = true;
 					pl.second._hx = -pl.second.dx;
 					pl.second._hz = -pl.second.dz;
-					cout << "플레이어[" << pl.second._id << "] - 적[" << i << "] 충돌" << endl;
-					cout << "x = " << pl.second._hx << ", z = " << pl.second._hz << endl;
-					// 맞았다는 사실을 sendall에 안 둔 이유
-					// 동기화가 딱히 필요 없음(자기 자신에게만 알려주면 됨)
-					send_hit_packet(&pl.second._c_socket, pl.second._id);
+					//cout << "플레이어[" << pl.second._id << "] - 적[" << i << "] 충돌" << endl;
+					//cout << "x = " << pl.second._hx << ", z = " << pl.second._hz << endl;
+					
+					for (int i{};i<thread_count;++i)
+						send_hit_packet(&clients[i]._c_socket, pl.second._id);
+
 					if (pl.second.hp <= 0)
 					{
 						// 임시 방편 -> 삭제 작업 해야함
@@ -503,7 +571,17 @@ void send_hit_packet(SOCKET* c_socket, short c_id)
 	SC_PLAYERHIT_PACKET p;
 	p.size = sizeof(p);
 	p.type = SC_PLAYERHIT;
-	p.id = c_id;		// 왜 있는거지?
+	p.id = c_id;
+
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
+void send_hitend_packet(SOCKET* c_socket, short c_id)
+{
+	SC_HITEND_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_HITEND;
+	p.id = c_id;
 
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
@@ -680,13 +758,13 @@ void Player_KnockBack(short id)
 
 	clients[id]._hit_cnt += 1;
 
-	cout << "id = " << id << ", x = " << clients[id].x << ", z = " << clients[id].z << endl;
+	//cout << "id = " << id << ", x = " << clients[id].x << ", z = " << clients[id].z << endl;
 
-	if (clients[id]._hit_cnt >= 20)
+	if (clients[id]._hit_cnt >= 30)
 	{
-		cout << "들어옴" << endl;
 		clients[id]._is_hit = false;
 		clients[id]._hit_cnt = 0;
 		clients[id]._hit_speed = 2.f;
+		send_hitend_packet(&clients[id]._c_socket, clients[id]._id);
 	}
 }

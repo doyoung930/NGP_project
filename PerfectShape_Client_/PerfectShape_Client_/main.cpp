@@ -1,6 +1,7 @@
 #include <iostream>
 #include "network.h"
-#include "protocol.h"
+#include "../../PerfectShape_Server/protocol.h"
+#include "bullet.h"
 #include "glew.h" //--- 필요한 헤더파일 include
 #include "freeglut.h"
 #include "freeglut_ext.h"
@@ -80,8 +81,6 @@ typedef struct Map {
 
 	float light_rotate_deg;
 	float LightColor[3];
-	bool Change_Light = false;
-	float Light_Count = 0;
 
 	int total_map[10][10];
 
@@ -734,6 +733,18 @@ GLvoid drawScene()
 		}
 	}
 
+	//------------------------- 조명
+	if (GetisHit(myID))
+	{
+		map.LightColor[1] = 0.0f;
+		map.LightColor[2] = 0.0f;
+	}
+	else
+	{
+		map.LightColor[1] = 1.0f;
+		map.LightColor[2] = 1.0f;
+	}
+
 	glutSwapBuffers();
 }
 
@@ -930,7 +941,7 @@ void Timer_CC_Player_Enemy() // Collision Check == CC
 				player.hit_speed = 2.0f;
 			}
 
-			map.Change_Light = true;
+			//map.Change_Light = true;
 
 			if (enemy[i].kind < 4)
 			{
@@ -939,7 +950,7 @@ void Timer_CC_Player_Enemy() // Collision Check == CC
 		}
 	}
 	// --------------------충돌 했을 경우 조명 색 바뀜-----------------//
-	if (map.Change_Light)
+	/*if (map.Change_Light)
 	{
 		map.Light_Count++;
 		map.LightColor[1] = 0.0f;
@@ -951,7 +962,7 @@ void Timer_CC_Player_Enemy() // Collision Check == CC
 			map.LightColor[2] = 1.0f;
 			map.Change_Light = false;
 		}
-	}
+	}*/
 }
 void Timer_CC_PBullect_Enemy()// P = Player
 {
