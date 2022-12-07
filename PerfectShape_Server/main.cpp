@@ -76,6 +76,7 @@ bool collide_sphere(glmvec3 a, glmvec3 b, float coll_dist);
 bool collide_box(glmvec3 bb, glmvec3 tb, glmvec3 bb_scale, glmvec3 tb_scale);
 bool IsCollision_PE(Enemy en, Player pl);
 void Player_KnockBack(short id);
+void Player_Check_Unbeatable(short id, chrono::system_clock::time_point start_time);
 
 unordered_map<short, Player>clients;
 Bullet bullets[MAX_BULLET_NUM];
@@ -225,10 +226,12 @@ int main()
 		for (int i{}; i < MAX_ENEMY_NUM; ++i) {
 			for (auto& pl : clients) {
 				if (enemy[i].is_active == false) continue;
-				if (IsCollision_PE(enemy[i], pl.second) && !pl.second._is_hit)
+				if (IsCollision_PE(enemy[i], pl.second) && !pl.second._is_unbeatable)
 				{
+					pl.second._unbeatable_time = chrono::system_clock::now();
 					pl.second.hp -= 1;
 					pl.second._is_hit = true;
+					pl.second._is_unbeatable = true;
 					pl.second._hx = -pl.second.dx;
 					pl.second._hz = -pl.second.dz;
 					//cout << "플레이어[" << pl.second._id << "] - 적[" << i << "] 충돌" << endl;
@@ -247,10 +250,15 @@ int main()
 			}
 		}
 
-		// 맞는 상태에 있는 클라이언트 찾아서 처리
 		for (auto& pl : clients) {
-			if (pl.second._is_hit)
+			// 맞는 상태에 있는 클라이언트 찾아서 처리
+			if (pl.second._is_hit) {
 				Player_KnockBack(pl.second._id);
+			}
+			// 무적 상태에 있는 클라이언트들 처리
+			if (pl.second._is_unbeatable) {
+				Player_Check_Unbeatable(pl.second._id, pl.second._unbeatable_time);
+			}
 		}
 		SetEvent(_hSendEvent);
 	}
@@ -699,5 +707,15 @@ void Player_KnockBack(short id)
 		clients[id]._hit_cnt = 0;
 		clients[id]._hit_speed = 2.f;
 		send_hitend_packet(&clients[id]._c_socket, clients[id]._id);
+	}
+}
+
+void Player_Check_Unbeatable(short id, chrono::system_clock::time_point start_time)
+{
+	auto now = chrono::system_clock::now();
+
+	if (now - clients[id]._unbeatable_time >= 2s)
+	{
+		clients[id]._is_unbeatable = false;
 	}
 }

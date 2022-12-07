@@ -22,5 +22,7 @@ public:
 	bool	_is_hit;
 	int		_hit_cnt;
 	float	_hit_speed;
+	bool	_is_unbeatable;
+	chrono::system_clock::time_point	_unbeatable_time;
 };
 

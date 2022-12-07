@@ -26,6 +26,7 @@ Player::Player(SOCKET& socket, short id): _c_socket(socket), _id(id)
 	_is_hit = false;
 	_hit_cnt = 0;
 	_hit_speed = 2.f;
+	_is_unbeatable = false;
 }
 Player::~Player()
 {
