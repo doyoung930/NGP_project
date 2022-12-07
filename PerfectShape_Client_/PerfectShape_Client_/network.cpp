@@ -25,12 +25,14 @@ struct PlayerInfo {
     float x, y, z;
     float dx, dy, dz;
 
+    bool is_active;
     bool is_hit;
 
     PlayerInfo() : hp{ 3 }, id{ 0 }, x{ 0.f }, y{ 0.f }, z{ 0.f } {
         dx = 0;
         dy = 0;
         dz = 0;
+        is_active = true;
     };
 };
 
@@ -49,7 +51,11 @@ short MyID;
 bool gameStart = false;
 bool EnemySet = false;
 int login_client_num = 1;
+
+
 PlayerInfo player[3];
+
+
 Bullet bullets[MAX_BULLET_NUM];
 
 Enemy enemy[MAX_ENEMY_NUM];
@@ -270,6 +276,13 @@ DWORD WINAPI do_recv()
                 short id = packet->id;
                 player[id].is_hit = false;
             }
+            case SC_DEAD: {
+                SC_PLAYER_DEAD_PACKET* packet = reinterpret_cast<SC_PLAYER_DEAD_PACKET*>(ptr);
+                short id = packet->id;
+                player[id].is_active = false;
+            }
+
+
             }
             ptr += size;
         }
@@ -357,6 +370,18 @@ bool GetisHit(int p_id)
 {
     return player[p_id].is_hit;
 }
+
+// 플레이어 사망-d
+bool GetPlayerState(int id) {
+    return player[id].is_active;
+}
+
+// 플레이어 Hp
+short GetPlayerHp(int id) {
+    return player[id].hp;
+}
+
+
 
 void err_quit(const char* msg)
 {

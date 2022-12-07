@@ -271,9 +271,10 @@ clock_t start;
 int myID;
 struct NetPlayer {
 	short id;
+	short hp = 3 ;
 	GLUquadricObj* ball;
 	glm::vec3 t;
-	bool active;
+	bool active = true;
 };
 
 NetPlayer NPlayers[3];
@@ -282,6 +283,8 @@ void InitVariable()
 {
 	start = clock();
 	//플레이어
+
+
 
 	myID = GetMyPlayerID();
 
@@ -435,6 +438,10 @@ GLvoid drawScene()
 	glBindTexture(GL_TEXTURE_2D, Texture_Wall[2]);
 	glDrawArrays(GL_TRIANGLES, 30, 6);
 	glFrontFace(GL_CCW);
+
+
+
+
 	//중간 방 기둥
 	for (int i = 0; i < 4; i++)
 	{
@@ -450,7 +457,10 @@ GLvoid drawScene()
 	}
 
 	for (int i = 0; i < 3; ++i) {
-		if (NPlayers[i].active) {
+		//NPlayers[i].active = GetPlayerState(i);
+		NPlayers[i].hp = GetPlayerHp(i);
+		//if (NPlayers[i].active) {
+		if (NPlayers[i].hp > 0){
 			if (i == 0) {
 				glUniform3f(objColorLocation, 0.95, 0.93, 0.4);
 			}
@@ -614,6 +624,9 @@ GLvoid drawScene()
 	glUniform3f(objColorLocation, 0.0, 1.0, 0.0);
 	glBindVertexArray(vao_cross);
 	glDrawArrays(GL_LINES, 0, 4);
+
+	
+	
 	// ==================================플레이어 체력===============================
 	GLUquadricObj* hp_qobj{};
 	// 내 체력
@@ -626,6 +639,7 @@ GLvoid drawScene()
 	}
 	// 팀원 체력
 	int otherID[2] = {};
+
 	if (myID == 0) {
 		otherID[0] = 1;
 		otherID[1] = 2;
@@ -1104,7 +1118,7 @@ glm::vec3 CC_CalculateRVector(glm::vec3 input, glm::vec3 normal)
 {
 	return input - 2.0f * (glm::dot(normal, input)) * normal;
 }
-
+       
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
@@ -1169,12 +1183,14 @@ GLvoid UpKeyboard(unsigned char key, int x, int y)
 
 GLvoid Mouse(int button, int state, int x, int y)
 {
-	if (state == GLUT_DOWN && button == GLUT_LEFT_BUTTON)
-	{
-		glm::vec3 tmp = glm::normalize(view_control.Direction);
-		send_attack_packet(tmp.x, tmp.y, tmp.z);
+	if (NPlayers[myID].hp > 0) {
+		if (state == GLUT_DOWN && button == GLUT_LEFT_BUTTON)
+		{
+			glm::vec3 tmp = glm::normalize(view_control.Direction);
+			send_attack_packet(tmp.x, tmp.y, tmp.z);
 
-		glutPostRedisplay();
+			glutPostRedisplay();
+		}
 	}
 
 	//if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
@@ -1535,6 +1551,12 @@ void RecvEnemyInfo () {
 			}
 		}
 	}
+}
+
+// Disconnect
+void Disconnect()
+{
+
 }
 
 int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정

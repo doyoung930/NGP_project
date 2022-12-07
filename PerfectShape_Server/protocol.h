@@ -19,6 +19,8 @@ constexpr char SC_STAGE = 11;
 constexpr char SC_PLAYERHIT = 12;
 constexpr char SC_GEN_ENEMY = 14;
 constexpr char SC_HITEND = 17;
+constexpr char SC_DEAD = 18;
+
 
 constexpr int PORT_NUM = 9000;
 constexpr int BUF_SIZE = 256;
@@ -147,3 +149,11 @@ struct SC_HITEND_PACKET {
 	char type;
 	short id;
 };
+
+
+struct SC_PLAYER_DEAD_PACKET {
+	unsigned char size;
+	char type;
+	short id;
+};
+

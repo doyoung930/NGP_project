@@ -33,4 +33,6 @@ float GetEnemyS(int id);
 bool GetEnemyState(int id);
 bool GetEnemyPopState(int e_id,int pop_id);
 bool GetisHit(int p_id);
+bool GetPlayerState(int id);
+short GetPlayerHp(int id);
 DWORD WINAPI do_recv();

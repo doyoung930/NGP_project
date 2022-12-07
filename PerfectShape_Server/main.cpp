@@ -78,6 +78,8 @@ void Player_Check_Unbeatable(short id, chrono::system_clock::time_point start_ti
 
 bool Player_Check_Touch_Wall(short id);
 
+void send_dead_packet(SOCKET* c_socket, short c_id);
+
 unordered_map<short, Player>clients;
 Bullet bullets[MAX_BULLET_NUM];
 Enemy enemy[MAX_ENEMY_NUM];
@@ -170,6 +172,8 @@ int main()
 		if (hThread == NULL) { closesocket(clients[thread_count]._c_socket); }
 		else { CloseHandle(hThread); }
 		thread_count++;
+
+		//break;
 	}
 
 	for (int i = 0; i < thread_count; ++i) {
@@ -223,10 +227,11 @@ int main()
 					send_bulletHit_packet(&clients[j]._c_socket, i);
 				}
 			}
+
 			else if (!bullets[i].is_team) { // 적 총알 - 아군 충돌체크
 				for (auto& pl : clients) {
-					if (collide_sphere({ bullets[i].x ,bullets[i].y , bullets[i].z },
-						{ pl.second.x ,pl.second.y ,pl.second.z }, 0.4f && !pl.second._is_unbeatable)) {// 클라 - 적 총알 충돌처리
+					if (collide_sphere({ bullets[i].x ,bullets[i].y , bullets[i].z  },
+						{ pl.second.x ,pl.second.y ,pl.second.z }, 0.4f && !pl.second._is_unbeatable) && (pl.second.hp > 0)) {// 클라 - 적 총알 충돌처리
 						pl.second._unbeatable_time = chrono::system_clock::now();
 						pl.second.hp -= 1;
 						pl.second._is_hit = true;
@@ -243,14 +248,18 @@ int main()
 						for (int i{}; i < thread_count; ++i) {
 							send_hit_packet(&clients[i]._c_socket, pl.second._id);
 							send_bulletHit_packet(&clients[i]._c_socket, i);
-						}
+						}                     
 
 						if (pl.second.hp <= 0)
 						{
+							for (int j = 0; j < thread_count; ++j) {
+								send_dead_packet(&clients[j]._c_socket, pl.second._id);
+							}
 							// 임시 방편 -> 삭제 작업 해야함
 							pl.second._in_use = false;
 							continue;
 						}
+
 						break;
 					}
 				}
@@ -267,9 +276,10 @@ int main()
 
 		// 플레이어와 적들의 충돌체크
 		for (int i{}; i < MAX_ENEMY_NUM; ++i) {
+
 			for (auto& pl : clients) {
 				if (enemy[i].is_active == false) continue;
-				if (IsCollision_PE(enemy[i], pl.second) && !pl.second._is_unbeatable)
+				if (IsCollision_PE(enemy[i], pl.second) && !pl.second._is_unbeatable && (pl.second.hp > 0))
 				{
 					pl.second._unbeatable_time = chrono::system_clock::now();
 					pl.second.hp -= 1;
@@ -570,6 +580,18 @@ void send_hitend_packet(SOCKET* c_socket, short c_id)
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
 
+
+// 모든 HP가 달은 플레이어 id 정보 SEND 함수
+void send_dead_packet(SOCKET* c_socket, short c_id)
+{
+	SC_HITEND_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_DEAD;
+	p.id = c_id;
+
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
 void send_GenRandEnemy_packet(SOCKET* c_socket, int e_id)
 {
 	SC_GEN_ENEMY_PACKET p;
@@ -655,23 +677,25 @@ void CalculateEnemyDirection(int id)
 	float min = 1000.f;
 	int c_id;
 	for (int i = 0; i < thread_count; ++i) {
-		if (enemy[id].kind == 4) {
-			dist = (clients[i].x - enemy[id].x) * (clients[i].x - enemy[id].x) + (clients[i].y - enemy[id].y) * (clients[i].y - enemy[id].y)
-				+ (clients[i].z - enemy[id].z) * (clients[i].z - enemy[id].z);
-			if (min > dist) {
-				min = dist;
-				enemy[id].dx = (clients[i].x - enemy[id].x) / sqrt(min);
-				enemy[id].dy = (clients[i].y - enemy[id].y) / sqrt(min);
-				enemy[id].dz = (clients[i].z - enemy[id].z) / sqrt(min);
+		if (clients[i].hp > 0) {
+			if (enemy[id].kind == 4) {
+				dist = (clients[i].x - enemy[id].x) * (clients[i].x - enemy[id].x) + (clients[i].y - enemy[id].y) * (clients[i].y - enemy[id].y)
+					+ (clients[i].z - enemy[id].z) * (clients[i].z - enemy[id].z);
+				if (min > dist) {
+					min = dist;
+					enemy[id].dx = (clients[i].x - enemy[id].x) / sqrt(min);
+					enemy[id].dy = (clients[i].y - enemy[id].y) / sqrt(min);
+					enemy[id].dz = (clients[i].z - enemy[id].z) / sqrt(min);
+				}
 			}
-		}
-		else {
-			dist = (clients[i].x - enemy[id].x) * (clients[i].x - enemy[id].x) +
-				(clients[i].z - enemy[id].z) * (clients[i].z - enemy[id].z);
-			if (min > dist) {
-				min = dist;
-				enemy[id].dx = (clients[i].x - enemy[id].x) / sqrt(min);
-				enemy[id].dz = (clients[i].z - enemy[id].z) / sqrt(min);
+			else {
+				dist = (clients[i].x - enemy[id].x) * (clients[i].x - enemy[id].x) +
+					(clients[i].z - enemy[id].z) * (clients[i].z - enemy[id].z);
+				if (min > dist) {
+					min = dist;
+					enemy[id].dx = (clients[i].x - enemy[id].x) / sqrt(min);
+					enemy[id].dz = (clients[i].z - enemy[id].z) / sqrt(min);
+				}
 			}
 		}
 	}
