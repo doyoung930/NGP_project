@@ -38,6 +38,7 @@ struct Enemy {
     int hp;
     int kind;
     float x, y, z;
+    float s;
     bool pop[3];
     float px, py, pz; // 파티클 원점 위치
     bool is_active;
@@ -206,6 +207,10 @@ DWORD WINAPI do_recv()
                 enemy[id].y = packet->y;
                 enemy[id].z = packet->z;
                 enemy[id].is_active = true;
+
+                if (enemy[id].kind > 4) enemy[id].s = 0.4f;
+                else enemy[id].s = (float)enemy[id].hp * 0.25f;
+
                 //std::cout << id << " | " << enemy[id].x << " | " << enemy[id].z << std::endl;
                 break;
             }
@@ -225,7 +230,10 @@ DWORD WINAPI do_recv()
                 enemy[id].pop[enemy[id].hp] = true;
                 if (enemy[id].hp == 0) {
                     enemy[id].is_active = false;
+                    break;
                 }
+                enemy[id].s = (float)enemy[id].hp * 0.25f;
+                enemy[id].y = enemy[id].s * 0.5f - 0.5f;
                 break;
             }
             case SC_BULLET: {
@@ -331,6 +339,10 @@ float GetEnemyY(int id) {
 
 float GetEnemyZ(int id) {
     return enemy[id].z;
+}
+
+float GetEnemyS(int id) {
+    return enemy[id].s;
 }
 
 bool GetEnemyState(int id) {

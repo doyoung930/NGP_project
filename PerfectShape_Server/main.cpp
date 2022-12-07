@@ -1,7 +1,7 @@
 #include "header.h"
 #include "Player.h"
 #include "enemy.h"
-#include <random>
+#include "bullet.h"
 
 std::random_device rd;
 std::mt19937 gen(rd());
@@ -76,74 +76,6 @@ bool collide_sphere(glmvec3 a, glmvec3 b, float coll_dist);
 bool collide_box(glmvec3 bb, glmvec3 tb, glmvec3 bb_scale, glmvec3 tb_scale);
 bool IsCollision_PE(Enemy en, Player pl);
 void Player_KnockBack(short id);
-
-
-struct Bullet
-{
-	float x, y, z;
-	float dx, dy, dz;
-	bool is_active;
-	bool is_team;
-
-	Bullet()
-	{
-		x = 0; y = 0; z = 0;
-		dx = 0; dy = 0; dz = 0;
-		is_active = false;
-		is_team = false;
-	};
-
-	void update() {
-		x += 0.3f * dx;
-		y += 0.3f * dy;
-		z += 0.3f * dz;
-	}
-
-	bool isOut()
-	{
-		if (x > 5.0f || x < -5.0f) {
-			return true;
-		}
-		if (y > 10.0f || y < -1.0f) {
-			return true;
-		}
-		if (z > 5.0f || z < -5.0f) {
-			return true;
-		}
-		return false;
-	}
-
-	int ColisionCheckEnemy(Enemy enemy[])
-	{
-		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
-			if (is_team && enemy[i].is_active) {
-				if (!is_active) continue;
-
-				float cx = enemy[i].x - x;
-				float cy = enemy[i].y - y;
-				float cz = enemy[i].z - z;
-				float dist = sqrt(cx * cx + cy * cy + cz * cz);
-				float weight = 0.02f;
-				if (enemy[i].kind == 4) weight = 0.04;
-
-				if (enemy[i].radius > dist + weight) {
-					is_active = false;
-					enemy[i].hp -= 1;
-					if (!enemy[i].hp) {
-						enemy[i].is_active = false;
-					}
-					//부딪힌 적의 아이디를 반환
-					return i;
-				}
-			}
-		}
-		return -1;
-	}
-
-	bool ColisionCheckClient()
-	{
-	}
-};
 
 unordered_map<short, Player>clients;
 Bullet bullets[MAX_BULLET_NUM];
@@ -656,7 +588,7 @@ void GenRandEnemy(int clear_num)
 		{
 			enemy[i].hp = 1;
 			enemy[i].speed = 0.1;
-			enemy[i].radius = 0.5 * (float)enemy[i].hp * 0.25f * 1.2;
+			enemy[i].radius = 0.5 * 0.4f * 1.2;
 			enemy[i].x = (float)dist(gen) / 50.f;
 			enemy[i].y = abs((float)dist(gen) / 100.f) + 2.0f;
 			enemy[i].z = (float)dist(gen) / 50.f;
@@ -664,7 +596,8 @@ void GenRandEnemy(int clear_num)
 	}
 }
 
-void CalculateEnemyDirection(int id) {
+void CalculateEnemyDirection(int id) 
+{
 	float dist;
 	float min = 1000.f;
 	int c_id;

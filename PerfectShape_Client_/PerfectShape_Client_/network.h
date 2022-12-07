@@ -29,6 +29,7 @@ int GetEnemyHP(int id);
 float GetEnemyX(int id);
 float GetEnemyY(int id);
 float GetEnemyZ(int id);
+float GetEnemyS(int id);
 bool GetEnemyState(int id);
 bool GetEnemyPopState(int e_id,int pop_id);
 bool GetisHit(int p_id);

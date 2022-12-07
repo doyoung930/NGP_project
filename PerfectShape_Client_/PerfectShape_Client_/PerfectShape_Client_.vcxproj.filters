@@ -34,9 +34,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="header.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="network.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -44,6 +41,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="..\..\PerfectShape_Server\protocol.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="header.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

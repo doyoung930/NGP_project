@@ -475,6 +475,7 @@ GLvoid drawScene()
 		// 가짜 방들
 		glFrontFace(GL_CW);
 		glUniform3f(lightColorLocation, 0.2, 0.2, 0.2);
+		glUniform3f(objColorLocation, 0.2, 0.2, 0.2);
 		for (int i = 0; i < 4; i++)
 		{
 			T_field = glm::mat4(1.0f);
@@ -524,10 +525,13 @@ GLvoid drawScene()
 				glm::mat4 S_enemy = glm::mat4(1.0f);
 				glm::mat4 R_enemy = glm::mat4(1.0f);
 				enemy[i].t.x = GetEnemyX(i);
+				enemy[i].t.y = GetEnemyY(i);
 				enemy[i].t.z = GetEnemyZ(i);
 				//std::cout << i << " | " << enemy[i].t.x << " | " << enemy[i].t.y << " | " << enemy[i].t.z << std::endl;
 				//std::cout << i << " | " << enemy[i].s.x << " | " << enemy[i].s.y << " | " << enemy[i]..z << std::endl;
 				T_enemy = glm::translate(T_enemy, enemy[i].t);
+				GLfloat tmp_s = GetEnemyS(i);
+				enemy[i].s = { tmp_s ,tmp_s ,tmp_s };
 				S_enemy = glm::scale(S_enemy, enemy[i].s);
 
 				if (enemy[i].kind == 4)
