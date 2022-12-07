@@ -135,7 +135,7 @@ int main()
 
 	// accept 
 	// 3명 접속 확인
-	while (thread_count < 2)
+	while (thread_count < 3)
 	{
 		SOCKET c_socket = accept(s_socket, reinterpret_cast<sockaddr*>(&server_addr), &addr_size);
 		if (c_socket == INVALID_SOCKET) {
@@ -233,12 +233,17 @@ int main()
 						pl.second._is_unbeatable = true;
 						pl.second._hx = bullets[i].dx / sqrt((bullets[i].dx * bullets[i].dx) + (bullets[i].dz * bullets[i].dz));
 						pl.second._hz = bullets[i].dz / sqrt((bullets[i].dx * bullets[i].dx) + (bullets[i].dz * bullets[i].dz));
+						
+						enemy[bullets[i].enemyID].shot = false;
 						bullets[i].is_active = false;
+						bullets[i].enemyID = -1;
 
 						//cout << "플레이어[" << pl.second._id << "] - 적[" << i << "] 충돌" << endl;
 						//cout << "x = " << pl.second._hx << ", z = " << pl.second._hz << endl;
-						for (int i{}; i < thread_count; ++i)
+						for (int i{}; i < thread_count; ++i) {
 							send_hit_packet(&clients[i]._c_socket, pl.second._id);
+							send_bulletHit_packet(&clients[i]._c_socket, i);
+						}
 
 						if (pl.second.hp <= 0)
 						{
@@ -620,11 +625,12 @@ void GenRandEnemy(int clear_num)
 	{
 		enemy[i].is_active = true;
 		enemy[i].shot == false;
+		//enemy[i].kind =4;
 		enemy[i].kind = abs(dist(gen) % 5);
 		if (enemy[i].kind < 4)
 		{
 			enemy[i].hp = abs(dist(gen) % 2) + 2;
-			enemy[i].speed = 0.035 / (float)enemy[i].hp;
+			enemy[i].speed = 0.025f / (float)enemy[i].hp;
 			enemy[i].radius = 0.5 * (float)enemy[i].hp * 0.25f * 1.3f;
 			enemy[i].x = (float)dist(gen) / 50.f;
 			enemy[i].y = (float)enemy[i].hp * 0.25f * 0.5f - 0.5f;
@@ -688,7 +694,7 @@ void InitEnemyBullet() {
 				bullets[j].dy = enemy[i].dy;
 				bullets[j].dz = enemy[i].dz;
 				bullets[j].enemyID = i;
-				bullets[j].speed = 0.1f;
+				bullets[j].speed = 0.05f;
 				break;
 			}
 		}
@@ -714,7 +720,7 @@ bool IsCollision_PE(Enemy en, Player pl)
 	glmvec3 pl_p = { pl.x, pl.y, pl.z };
 	glmvec3 en_s = { en.radius, en.radius, en.radius };
 
-	if (collide_box(en_p, pl_p, { 0.8f, 0.8f, 0.8f }, en_s))
+	if (collide_box(pl_p, en_p, { 0.8f, 0.8f, 0.8f }, en_s))
 	{
 		return true;
 	}
@@ -770,7 +776,7 @@ void Player_Check_Unbeatable(short id, chrono::system_clock::time_point start_ti
 {
 	auto now = chrono::system_clock::now();
 
-	if (now - clients[id]._unbeatable_time >= 2s)
+	if (now - clients[id]._unbeatable_time >= 5s)
 	{
 		clients[id]._is_unbeatable = false;
 	}

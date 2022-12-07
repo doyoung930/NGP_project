@@ -558,7 +558,7 @@ GLvoid drawScene()
 					all = T_enemy * R_enemy * S_enemy;
 					glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
 				}
-				enemy[i].ry += 0.05f;
+				enemy[i].ry += 0.1f;
 				glUniform3f(objColorLocation, 0.11, 0.33, 0.99);
 				glBindVertexArray(vao_enemy);
 				glDrawArrays(GL_TRIANGLES, 0, 36);

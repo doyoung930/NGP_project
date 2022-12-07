@@ -38,8 +38,8 @@ int Bullet::ColisionCheckEnemy(Enemy enemy[])
 			float cy = enemy[i].y - y;
 			float cz = enemy[i].z - z;
 			float dist = sqrt(cx * cx + cy * cy + cz * cz);
-			float weight = 0.03f;
-			if (enemy[i].kind == 4) weight = 0.04;
+			float weight = 0.04f;
+			if (enemy[i].kind == 4) weight = 0.04f;
 
 			if (enemy[i].radius > dist + weight) {
 				is_active = false;
@@ -48,7 +48,7 @@ int Bullet::ColisionCheckEnemy(Enemy enemy[])
 					enemy[i].is_active = false;
 					return i;
 				}
-				enemy[i].speed = 0.035 / float(enemy[i].hp);
+				enemy[i].speed = 0.025f / float(enemy[i].hp);
 				enemy[i].radius = 0.5f * 0.25f * (float)enemy[i].hp * 1.3f;
 				enemy[i].y = 0.25f * (float)enemy[i].hp * 0.5f - 0.5f;
 
