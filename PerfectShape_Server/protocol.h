@@ -27,6 +27,20 @@ constexpr int NAMESIZE = 20;
 #define MAX_BULLET_NUM 60
 #define MAX_ENEMY_NUM 20
 
+struct PlayerInfo {
+	int id;
+	int hp;
+	float x, y, z;
+	float dx, dy, dz;
+
+	PlayerInfo() : hp{ 3 }, id{ 0 }, x{ 0.f }, y{ 0.f }, z{ 0.f } {
+		dx = 0;
+		dy = 0;
+		dz = 0;
+	};
+};
+
+
 struct CS_LOGIN_PACKET {
 	char size;
 	char type;
@@ -39,6 +53,15 @@ struct CS_MOVE_PACKET {
 	short	id;
 	float	x;
 	float	z;
+};
+
+struct CS_DIRECTION_PACKET {
+	char	size;
+	char	type;
+	short	id;
+	float	dx;
+	float	dz;
+	float	degree;
 };
 
 struct CS_KEYBOARD_PACKET {
@@ -54,14 +77,12 @@ struct CS_MOUSECLICK_PACKET {
 	short id; // 클라이언트 아이디
 	float dx, dy, dz; // 시선 벡터(플레이어의 총알 방향)
 };
-
-struct CS_DIRECTION_PACKET {
+struct CS_MOVE_PACKET {
 	char	size;
 	char	type;
 	short	id;
-	float	dx;
-	float	dz;
-	float	degree;
+	float	x;
+	float	z;
 };
 
 struct SC_LOGININFO_PACKET {
