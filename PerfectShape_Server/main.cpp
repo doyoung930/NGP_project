@@ -227,9 +227,10 @@ int main()
 						pl.second._is_unbeatable = true;
 						pl.second._hx = bullets[i].dx / sqrt((bullets[i].dx * bullets[i].dx) + (bullets[i].dz * bullets[i].dz));
 						pl.second._hz = bullets[i].dz / sqrt((bullets[i].dx * bullets[i].dx) + (bullets[i].dz * bullets[i].dz));
+						bullets[i].is_active = false;
+
 						//cout << "플레이어[" << pl.second._id << "] - 적[" << i << "] 충돌" << endl;
 						//cout << "x = " << pl.second._hx << ", z = " << pl.second._hz << endl;
-
 						for (int i{}; i < thread_count; ++i)
 							send_hit_packet(&clients[i]._c_socket, pl.second._id);
 
