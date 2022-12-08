@@ -21,4 +21,5 @@ public:
 public:
 	Map();
 	~Map();
+	void OpenDoor(int num);
 };

@@ -65,10 +65,12 @@ void send_bulletHit_packet(SOCKET* c_socket, short b_id);
 void send_enemyHit_packet(SOCKET* c_socket, short id);
 void send_hit_packet(SOCKET* c_socket, short c_id);
 void send_hitend_packet(SOCKET* c_socket, short c_id);
+void send_pillar_packet(SOCKET* c_socket, short c_id);
 void GenRandEnemy(int clear_num);
 void SetEnemies();
 void CalculateEnemyDirection(int id);
 void InitEnemyBullet();
+
 void gameStart();
 void Disconnect(SOCKET*, short);
 
@@ -204,14 +206,24 @@ int main()
 				pl.second.undo();
 			}
 		}
-
+		int cnt = 0;
 		for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
 			if (enemy[i].is_active) {
 				CalculateEnemyDirection(i);
 				enemy[i].update();
 			}
+			else {
+				cnt++;
+			}
 		}
 		InitEnemyBullet();
+
+		if (cnt == 20) {
+			for (auto& pl : clients) {
+				for (int i = 0; i < thread_count; ++i)
+					send_pillar_packet(&pl.second._c_socket, i);
+			}
+		}
 
 		// 총알 위치 이동 및 충돌 체크
 		for (int i = 0; i < MAX_BULLET_NUM; ++i) {
@@ -617,6 +629,17 @@ void send_start_packet(SOCKET* c_socket)
 	cout << "start 패킷 보냄" << endl;
 }
 
+void send_pillar_packet(SOCKET* c_socket,short pillar_id)
+{
+	SC_PILLAR_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_PILLAR;
+	p.id = pillar_id;
+	p.y = map.pillar_t[pillar_id][4].y;
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+	cout << "start 패킷 보냄" << endl;
+}
+
 void gameStart()
 {
 	cout << "GameStart!" << endl;
@@ -632,10 +655,10 @@ void gameStart()
 
 void SetEnemies()
 {
-	GenRandEnemy(0);
+	GenRandEnemy(map.clear_num);
 
 	for (int j = 0; j < thread_count; ++j) {
-		for (int i = 0; i < 5; ++i) {
+		for (int i = 0; i < 5 + map.clear_num; ++i) {
 			send_GenRandEnemy_packet(&clients[j]._c_socket, i);
 		}
 	}
@@ -643,7 +666,7 @@ void SetEnemies()
 
 void GenRandEnemy(int clear_num)
 {
-	for (int i = 0; i < 5; i++)
+	for (int i = 0; i < 5 + clear_num; i++)
 	{
 		enemy[i].is_active = true;
 		enemy[i].shot == false;

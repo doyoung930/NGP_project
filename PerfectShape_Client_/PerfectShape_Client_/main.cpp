@@ -702,6 +702,7 @@ GLvoid drawScene()
 
 	glUniform3f(objColorLocation, 1.0, 1.0, 0.0);
 	for (int i = 0; i < 3; ++i) {
+		if (NPlayers[i].hp < 1) continue;
 		if (i == 0) {
 			glUniform3f(objColorLocation, 0.95, 0.93, 0.4);
 		}
