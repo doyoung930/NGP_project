@@ -265,8 +265,8 @@ clock_t start;
 
 int myID;
 struct NetPlayer {
-	short id;
-	short hp = 3 ;
+	int id;
+	int hp = 3 ;
 	GLUquadricObj* ball;
 	glm::vec3 t;
 	bool active = true;

@@ -23,7 +23,7 @@ constexpr char SC_DEAD = 18;
 constexpr char SC_PILLAR = 19;
 
 constexpr int PORT_NUM = 9000;
-constexpr int BUF_SIZE = 256;
+constexpr int BUF_SIZE = 1024;
 constexpr int NAMESIZE = 20;
 
 #define MAX_BULLET_NUM 60
@@ -38,7 +38,7 @@ struct CS_LOGIN_PACKET {
 struct CS_MOVE_PACKET {
 	char	size;
 	char	type;
-	short	id;
+	int	id;
 	float	x;
 	float	z;
 };
@@ -46,21 +46,21 @@ struct CS_MOVE_PACKET {
 struct CS_KEYBOARD_PACKET {
 	char	size;
 	char	type;
-	short	id;
+	int	id;
 	int		direction;
 };
 
 struct CS_MOUSECLICK_PACKET {
 	unsigned char size;
 	char type;
-	short id; // 클라이언트 아이디
+	int id; // 클라이언트 아이디
 	float dx, dy, dz; // 시선 벡터(플레이어의 총알 방향)
 };
 
 struct CS_DIRECTION_PACKET {
 	char	size;
 	char	type;
-	short	id;
+	int	id;
 	float	dx;
 	float	dz;
 	float	degree;
@@ -69,13 +69,13 @@ struct CS_DIRECTION_PACKET {
 struct SC_LOGININFO_PACKET {
 	char	size;
 	char	type;
-	short	id;
+	int	id;
 };
 
 struct SC_ADD_PLAYER_PACKET {
 	char	size;
 	char	type;
-	short	id;
+	int	id;
 };
 
 struct SC_START_PACKET {
@@ -87,33 +87,33 @@ struct SC_REMOVE_PLAYER_PACKET
 {
 	char	size;
 	char	type;
-	short	id;
+	int	id;
 };
 
 struct SC_MOVE_PLAYER_PACKET {
 	char	size;
 	char	type;
-	short	id;
+	int	id;
 	float	x, z;
 };
 
 struct SC_PLAYERHIT_PACKET {
 	unsigned char size;
 	char type;
-	short id;
+	int id;
 };
 
 struct SC_ENEMY_PACKET {
 	unsigned char size;
 	char type;
-	short id;
+	int id;
 	float x, z;
 };
 
 struct SC_GEN_ENEMY_PACKET {
 	unsigned char size;
 	char type;
-	short id;
+	int id;
 	int hp;
 	int kind;
 	float x, y, z;
@@ -122,44 +122,44 @@ struct SC_GEN_ENEMY_PACKET {
 struct SC_ENEMYHIT_PACKET {
 	unsigned char size;
 	char type;
-	short id;
+	int id;
 };
 
 struct SC_BULLET_PACKET {
 	unsigned char size;
 	char type;
-	short bullet_id;
+	int bullet_id;
 	float x, y, z;
 };
 
 struct SC_BULLETHIT_PACKET {
 	unsigned char size;
 	char type;
-	short bullet_id;
+	int bullet_id;
 };
 
 struct SC_STAGE_PACKET {
 	unsigned char size;
 	char type;
-	short state;
+	int state;
 };
 
 struct SC_HITEND_PACKET {
 	unsigned char size;
 	char type;
-	short id;
+	int id;
 };
 
 
 struct SC_PLAYER_DEAD_PACKET {
 	unsigned char size;
 	char type;
-	short id;
+	int id;
 };
 
 struct SC_PILLAR_PACKET {
 	unsigned char size;
 	char type;
-	short id;
+	int id;
 	float y;
 };
