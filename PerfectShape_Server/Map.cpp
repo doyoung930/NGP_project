@@ -35,6 +35,7 @@ Map::Map()
 
 	wave = true;
 
+	random_door = -1;
 	clear_num = 0;
 }
 
@@ -44,24 +45,5 @@ Map::~Map()
 }
 
 void Map::OpenDoor(int num) {
-	for (int i = 4; i < 6; ++i) {
-		if (pillar_t[num][i].y < 5.3) pillar_t[num][i].y += 0.05f;
-	}
 
-	//if (map.open[i] == 1)
-	//{
-	//	for (int j = 0; j < 2; j++)
-	//	{
-	//		if (map.pillar_t[i][j + 4].y < 5.3) map.pillar_t[i][j + 4].y += 0.05f;
-	//	}
-	//}
-	//else if (map.open[i] == -1)
-	//{
-	//	for (int j = 0; j < 2; j++)
-	//	{
-	//		if (map.pillar_t[i][j + 4].y > 2.3) map.pillar_t[i][j + 4].y -= 0.05f;
-
-	//		else if (j == 1) map.open[i] = 0;
-	//	}
-	//}
 }

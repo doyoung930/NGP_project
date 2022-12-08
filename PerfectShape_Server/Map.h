@@ -15,6 +15,7 @@ public:
 	glmvec3 rooms_s;
 	glmvec3 rooms_t[4];
 
+	int random_door;
 	int open[4];
 	bool wave;
 	int clear_num;

@@ -279,8 +279,6 @@ void InitVariable()
 	start = clock();
 	//플레이어
 
-
-
 	myID = GetMyPlayerID();
 
 	if (myID == 0)
@@ -433,15 +431,17 @@ GLvoid drawScene()
 	glBindTexture(GL_TEXTURE_2D, Texture_Wall[2]);
 	glDrawArrays(GL_TRIANGLES, 30, 6);
 	glFrontFace(GL_CCW);
-
-
-
-
+	
 	//중간 방 기둥
+	int pillar_id = GetPillarID();
 	for (int i = 0; i < 4; i++)
 	{
 		for (int j = 0; j < 10; j++)
 		{
+			if (i == pillar_id) {
+				if(j == 4 || j == 5)
+					map.pillar_t[pillar_id][j].y = GetPillarY();
+			}
 			glm::mat4 T_pillar = glm::mat4(1.0f);
 			T_pillar = translate(T_pillar, map.pillar_t[i][j]);
 			all = T_pillar * S_pillar;
@@ -541,17 +541,6 @@ GLvoid drawScene()
 
 				if (enemy[i].kind == 4)
 				{
-					if (enemy[i].shot)
-					{
-						//std::cout<< enemy[i].shot <<"\n";
-						glm::mat4 T_enemy_bullet = glm::mat4(1.0f);
-						T_enemy_bullet = glm::translate(T_enemy_bullet, enemy[i].bullet_t);
-						all = T_enemy_bullet;
-						glUniform3f(objColorLocation, 1.0, 0.0, 0.0);
-						glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
-						GenShpere(enemy[i].bullet, 0, 0.1, 10);
-					}
-
 					R_enemy = glm::rotate(R_enemy, enemy[i].ry, { 0,1,0 });
 					all = T_enemy * R_enemy  * S_enemy;
 					glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
@@ -620,8 +609,6 @@ GLvoid drawScene()
 	glBindVertexArray(vao_cross);
 	glDrawArrays(GL_LINES, 0, 4);
 
-	
-	
 	// ==================================플레이어 체력===============================
 	GLUquadricObj* hp_qobj{};
 	// 내 체력
@@ -731,13 +718,14 @@ GLvoid drawScene()
 		}
 	}
 
-	for (int i = 0; i < 20; i++)
+	for (int i = 0; i < MAX_ENEMY_NUM; i++)
 	{
 		glUniform3f(objColorLocation, 0.11, 0.33, 0.99);
 		if (enemy[i].in_room == true)
 		{
 			glm::mat4 T_enemy = glm::mat4(1.0f);
 			glm::mat4 S_enemy = glm::mat4(1.0f);
+
 			T_enemy = glm::translate(T_enemy, enemy[i].t);
 			S_enemy = glm::scale(S_enemy, enemy[i].s);
 
@@ -775,6 +763,24 @@ GLvoid TimerFunction(int value)
 	player.t.z = GetPlayerZ(myID);
 	//Timer_PlayerRun();
 	Timer_Enemy_Actions();
+	int stage = GetStageState();
+	if (stage == -1) {
+		for (int i = 0; i < MAX_ENEMY_NUM; ++i)
+			for (int j = 0; j < 3; ++j)
+				for (int q = 0; q < 30; q++)
+				{
+					float speed = (float)abs(dist(gen)) / 1000.0f;
+					enemy[i].particles[j][q].t = { 0,0,0 };
+					enemy[i].particles[j][q].p_vector = { 0,0,0 };
+					enemy[i].particles[j][q].time = 0;
+					enemy[i].particles[j][q].bounce_time = 0;
+					enemy[i].particles[j][q].vector = glm::normalize(glm::vec3(dist(gen), abs(dist(gen)) + 200, dist(gen)));
+					enemy[i].particles[j][q].vector = speed * enemy[i].particles[j][q].vector;
+					enemy[i].particles[j][q].s.x = (float)abs(dist(gen)) / 2000.0f + 0.05f;
+					enemy[i].particles[j][q].s.y = enemy[i].particles[j][q].s.x;
+					enemy[i].particles[j][q].s.z = enemy[i].particles[j][q].s.x;
+				}
+	}
 
 	clock_t end = clock();
 	double time = double(end - start) / CLOCKS_PER_SEC;
@@ -794,7 +800,7 @@ GLvoid TimerFunction(int value)
 
 void Timer_Enemy_Actions()
 {
-	for (int i = 0; i < 20; i++)// 적 움직임
+	for (int i = 0; i < MAX_ENEMY_NUM; i++)// 적 움직임
 	{
 		//파티클
 		for (int j = 0; j < 3; j++)
@@ -852,7 +858,34 @@ glm::vec3 CC_CalculateRVector(glm::vec3 input, glm::vec3 normal)
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
+	case 'W':
+		if (player.FB_dir <= 0) {
+			player.FB_dir += 1;
+			send_keyboard_packet(1);
+		}
+		break;
+	case 'A':
+		if (player.LR_dir >= 0) {
+			player.LR_dir -= 1;
+			send_keyboard_packet(2);
+		}
+		break;
+	case 'S':
+		if (player.FB_dir >= 0) {
+			player.FB_dir -= 1;
+			send_keyboard_packet(3);
+		}
 
+		break;
+	case 'D':
+		if (player.LR_dir <= 0) {
+			player.LR_dir += 1;
+			send_keyboard_packet(4);
+		}
+		break;
+	case 'Q':
+		PostQuitMessage(0);
+		break;
 	case 'w':
 		if (player.FB_dir <= 0) {
 			player.FB_dir += 1;
@@ -890,6 +923,22 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 GLvoid UpKeyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
+	case 'W':
+		send_keyboard_packet(-1);
+		player.FB_dir -= 1;
+		break;
+	case 'A':
+		send_keyboard_packet(-2);
+		player.LR_dir += 1;
+		break;
+	case 'S':
+		send_keyboard_packet(-3);
+		player.FB_dir += 1;
+		break;
+	case 'D':
+		send_keyboard_packet(-4);
+		player.LR_dir -= 1;
+		break;
 	case 'w':
 		send_keyboard_packet(-1);
 		player.FB_dir -= 1;

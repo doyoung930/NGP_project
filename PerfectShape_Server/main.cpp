@@ -66,6 +66,7 @@ void send_enemyHit_packet(SOCKET* c_socket, short id);
 void send_hit_packet(SOCKET* c_socket, short c_id);
 void send_hitend_packet(SOCKET* c_socket, short c_id);
 void send_pillar_packet(SOCKET* c_socket, short c_id);
+void send_stage_packet(SOCKET* c_socket, short state);
 void GenRandEnemy(int clear_num);
 void SetEnemies();
 void CalculateEnemyDirection(int id);
@@ -188,7 +189,9 @@ int main()
 	// 초기화 및 게임 시작
 	SetEnemies();
 	gameStart();
-	
+	for (auto& pl : clients)
+		send_stage_packet(&pl.second._c_socket, 0);
+
 	// Send All 쓰레드 생성
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SendAll, 0, 0, NULL);
 	if (hThread == NULL) { cout << "Send All 쓰레드 생성 에러" << endl; }
@@ -199,7 +202,9 @@ int main()
 		DWORD retval = WaitForSingleObject(_hCalculateEvent, INFINITE);
 		//클라 위치 업데이트
 		for (auto& pl : clients) {
-			pl.second.update();
+			if (pl.second.room == -1) {
+				pl.second.update();
+			}
 			//벽에 닿았나 체크
 			if (Player_Check_Touch_Wall(pl.second._id)) {
 				// 닿았으면 이동 취소
@@ -212,16 +217,89 @@ int main()
 				CalculateEnemyDirection(i);
 				enemy[i].update();
 			}
-			else {
+			else if(map.wave == true){
 				cnt++;
+				if(cnt == 20){
+					map.wave = false;
+					map.random_door = abs(dist(gen)) % 4;
+					map.open[map.random_door] = 1;
+					if (map.clear_num < 19) {
+						map.clear_num++;
+					}
+					for(auto& pl : clients)
+						send_stage_packet(&pl.second._c_socket, map.open[map.random_door]);
+				}
 			}
 		}
 		InitEnemyBullet();
 
-		if (cnt == 20) {
+		if (map.wave == false) {
+			int cnt = 0;
 			for (auto& pl : clients) {
-				for (int i = 0; i < thread_count; ++i)
-					send_pillar_packet(&pl.second._c_socket, i);
+				if (pl.second.x > 6.0f)
+				{
+					pl.second.room = 1;
+				}
+				else if (pl.second.x < -6.0f)
+				{
+					pl.second.room = 0;
+				}
+				else if (pl.second.z > 6.0f)
+				{
+					pl.second.room = 3;
+				}
+				else if (pl.second.z < -6.0f)
+				{
+					pl.second.room = 2;
+				}
+				else if (-5.0f < pl.second.x && pl.second.x < 5.0f)
+				{
+					pl.second.room = -1;
+				}
+
+				if (pl.second.room != -1){
+					cnt++;
+				}
+			}
+
+			if (cnt == thread_count && map.open[map.random_door] != -1) {
+				map.open[map.random_door] = -1;
+				for (auto& pl : clients)
+					send_stage_packet(&pl.second._c_socket, map.open[map.random_door]);
+			}
+
+			for (int j = 0; j < 2; j++)
+			{	
+				if (map.open[map.random_door] == 1) {
+					if (map.pillar_t[map.random_door][j + 4].y < 5.3) {
+						map.pillar_t[map.random_door][j + 4].y += 0.04f;
+						//cout << "올라가는 중!" << endl;
+					}
+				}
+				else if(map.open[map.random_door] == -1){
+					if (map.pillar_t[map.random_door][j + 4].y > 2.3) {
+						map.pillar_t[map.random_door][j + 4].y -= 0.04f;
+					}
+					else {
+						map.open[map.random_door] = 0;
+						SetEnemies();
+						for (auto& pl : clients) {
+							if (pl.second.room == 0) pl.second.x += 10.f;
+							else if (pl.second.room == 1) pl.second.x -= 10.f;
+							else if (pl.second.room == 2) pl.second.z += 10.f;
+							else if (pl.second.room == 3) pl.second.z -= 10.f;
+							pl.second.room = -1;
+							send_stage_packet(&pl.second._c_socket, map.open[map.random_door]);
+						}
+						map.random_door = -1;
+						map.wave = true;
+						break;
+					}
+				}
+			}
+
+			for (auto& pl : clients) {
+				send_pillar_packet(&pl.second._c_socket, map.random_door);
 			}
 		}
 
@@ -629,6 +707,14 @@ void send_start_packet(SOCKET* c_socket)
 	cout << "start 패킷 보냄" << endl;
 }
 
+void send_stage_packet(SOCKET* c_socket, short state) {
+	SC_STAGE_PACKET p;
+	p.size = sizeof(p);
+	p.type = SC_STAGE;
+	p.state = state;
+	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
+}
+
 void send_pillar_packet(SOCKET* c_socket,short pillar_id)
 {
 	SC_PILLAR_PACKET p;
@@ -637,7 +723,6 @@ void send_pillar_packet(SOCKET* c_socket,short pillar_id)
 	p.id = pillar_id;
 	p.y = map.pillar_t[pillar_id][4].y;
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
-	cout << "start 패킷 보냄" << endl;
 }
 
 void gameStart()
@@ -658,7 +743,7 @@ void SetEnemies()
 	GenRandEnemy(map.clear_num);
 
 	for (int j = 0; j < thread_count; ++j) {
-		for (int i = 0; i < 5 + map.clear_num; ++i) {
+		for (int i = 0; i < 1 + map.clear_num; ++i) {
 			send_GenRandEnemy_packet(&clients[j]._c_socket, i);
 		}
 	}
@@ -666,7 +751,7 @@ void SetEnemies()
 
 void GenRandEnemy(int clear_num)
 {
-	for (int i = 0; i < 5 + clear_num; i++)
+	for (int i = 0; i < 1 + clear_num; i++)
 	{
 		enemy[i].is_active = true;
 		enemy[i].shot == false;

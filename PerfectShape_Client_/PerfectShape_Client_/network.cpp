@@ -19,6 +19,7 @@ SOCKET sock;
 SOCKADDR_IN serveraddr;
 char recvBuf[BUF_SIZE];
 
+
 struct PlayerInfo {
     int id;
     int hp;
@@ -50,8 +51,10 @@ struct Enemy {
 short MyID;
 bool gameStart = false;
 bool EnemySet = false;
+int stage_state = 0;
 int login_client_num = 1;
-
+float pillar_y = 2.3f;
+float pillarID = -1;
 
 PlayerInfo player[3];
 
@@ -259,6 +262,16 @@ DWORD WINAPI do_recv()
             }
             case SC_STAGE: {
                 SC_STAGE_PACKET* packet = reinterpret_cast<SC_STAGE_PACKET*>(ptr);
+                short state = packet->state;
+                stage_state = state;
+                if (stage_state == -1) {
+                    for (int i = 0; i < MAX_ENEMY_NUM; ++i) {
+                        for (int j = 0; j < 3; ++j) {
+                            enemy[i].pop[j] = false;
+                        }
+                    }
+                }
+                //std::cout << "asdasd" << std::endl;
                 break;
             }
             case SC_PLAYERHIT: {
@@ -275,14 +288,21 @@ DWORD WINAPI do_recv()
                 SC_HITEND_PACKET* packet = reinterpret_cast<SC_HITEND_PACKET*>(ptr);
                 short id = packet->id;
                 player[id].is_hit = false;
+                break;
             }
             case SC_DEAD: {
                 SC_PLAYER_DEAD_PACKET* packet = reinterpret_cast<SC_PLAYER_DEAD_PACKET*>(ptr);
                 short id = packet->id;
                 player[id].is_active = false;
+                break;
             }
-
-
+            case SC_PILLAR: {
+                SC_PILLAR_PACKET* packet = reinterpret_cast<SC_PILLAR_PACKET*>(ptr);
+                pillarID = packet->id;
+                pillar_y = packet->y;
+                //std::cout << pillarID << " " << pillar_y << std::endl;
+                break;
+            }
             }
             ptr += size;
         }
@@ -300,7 +320,9 @@ short GetMyPlayerID() {
 bool GetGameState() {
     return gameStart;
 }
-
+int GetStageState() {
+    return stage_state;
+}
 float GetPlayerX(short id) {
     return player[int(id)].x;
 }
@@ -356,6 +378,14 @@ float GetEnemyZ(int id) {
 
 float GetEnemyS(int id) {
     return enemy[id].s;
+}
+
+float GetPillarY() {
+    return pillar_y;
+}
+
+int GetPillarID() {
+    return pillarID;
 }
 
 bool GetEnemyState(int id) {

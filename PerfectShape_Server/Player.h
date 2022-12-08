@@ -18,6 +18,7 @@ public:
 	float	speed;
 	int		FB_Dir;
 	int		LR_Dir;
+	int		room; // -1:중간 / 1,2,3,4 : 방 이동
 	bool	_in_use;
 	short	hp;
 	float	_hx, _hy, _hz;
