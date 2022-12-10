@@ -17,6 +17,7 @@
 
 #define shp_bullet_num 20
 
+
 typedef struct m {
 	// 마우스 시점 제어
 	float previous_y;
@@ -152,7 +153,7 @@ bool collide_box(glm::vec3 bb, glm::vec3 tb, glm::vec3 bb_scale, glm::vec3 tb_sc
 float CalculateRotate(glm::vec3 n, glm::vec3 t, bool normal_z);
 glm::vec3 CC_CalculateRVector(glm::vec3 input, glm::vec3 normal);
 void RecvEnemyInfo();
-
+int send_dead_packet();
 void Timer_Enemy_Actions();
 
 unsigned int Texture_Wall[3];
@@ -474,8 +475,24 @@ GLvoid drawScene()
 			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
 			GenShpere(NPlayers[i].ball, 0, 0.4, 20);
 		}
+		
 	}
+	int check_player_hp = 0;
+	for (int i = 0; i < MAX_USER; ++i) {
+		if (NPlayers[i].hp <= 0) {
+			check_player_hp++;
+		}
+		else
+		{
+			check_player_hp = 0;
+		}
+	}
+	if (check_player_hp == 3) {
 
+		PostQuitMessage(0);
+		send_dead_packet();
+		NetCleanup();
+	}
 	{
 		// 가짜 방들
 		glFrontFace(GL_CW);
@@ -1247,7 +1264,7 @@ bool make_vertexShader()
 
 bool make_fragmentShader()
 {
-	char a[20] = "fragment.glsl";
+	char a[20] = "fragment.glsl";;
 
 	fragmentsource = filetobuf(a);
 	//--- 프래그먼트 세이더 객체 만들기

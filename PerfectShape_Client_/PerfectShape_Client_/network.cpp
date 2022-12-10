@@ -87,6 +87,7 @@ int NetInit()
 
 void NetCleanup()
 {
+    std::cout << " 소켓  close " << std::endl;
     closesocket(sock);
 
     WSACleanup();
@@ -158,6 +159,22 @@ int send_attack_packet(float dx, float dy, float dz)
     return retval;
 }
 
+int send_dead_packet()
+{
+    int retval = 0;
+
+    CS_DEAD_PACKET p;
+
+    p.size = sizeof(CS_DEAD_PACKET);
+    p.type = CS_PLAYER_DEAD;
+    p.state = false;
+
+    retval = send(sock, reinterpret_cast<const char*>(&p), sizeof(CS_DEAD_PACKET), 0);
+    std::cout << "Dead 패킷 보냄" << std::endl;
+    return retval;
+}
+
+
 DWORD WINAPI do_recv()
 {
     int retval;
@@ -165,7 +182,7 @@ DWORD WINAPI do_recv()
     while (true) {
         ZeroMemory(recvBuf, BUF_SIZE);
         retval = recv(sock, recvBuf, BUF_SIZE, 0);
-        if (retval == SOCKET_ERROR) err_display("RECV()");
+        //if (retval == SOCKET_ERROR) err_display("RECV()");
         char* ptr = recvBuf;
 
         while (ptr != NULL) {

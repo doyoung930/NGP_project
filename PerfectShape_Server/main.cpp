@@ -73,7 +73,7 @@ void CalculateEnemyDirection(int id);
 void InitEnemyBullet();
 
 void gameStart();
-void Disconnect(SOCKET*, short);
+void Disconnect();
 
 bool IsCollision_PE(Enemy en, Player pl);
 void Player_KnockBack(short id);
@@ -407,6 +407,7 @@ int main()
 	}
 	
 	closesocket(c_socket);
+	closesocket(s_socket);
 	WSACleanup();
 }
 
@@ -419,10 +420,10 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 		// 데이터를 받는다
 		ZeroMemory(buf, sizeof(buf));
 		ret = recv(plclient->_c_socket, buf, sizeof(buf), 0);
-		if (ret == SOCKET_ERROR) {
+		/*if (ret == SOCKET_ERROR) {
 			err_display("recv()");
 			return 0;
-		}
+		}*/
 
 		char* p = buf;
 
@@ -526,6 +527,14 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 
 				break;
 			}
+
+			case CS_PLAYER_DEAD:
+			{
+				
+				Disconnect();
+				break;
+			}
+
 			}
 			p += size;
 		}
@@ -674,7 +683,7 @@ void send_hitend_packet(SOCKET* c_socket, short c_id)
 // 모든 HP가 달은 플레이어 id 정보 SEND 함수
 void send_dead_packet(SOCKET* c_socket, short c_id)
 {
-	SC_HITEND_PACKET p;
+	SC_PLAYER_DEAD_PACKET p;
 	p.size = sizeof(p);
 	p.type = SC_DEAD;
 	p.id = c_id;
@@ -833,17 +842,15 @@ void InitEnemyBullet() {
 	}
 }
 // 연결 해제
-void Disconnect(SOCKET* c_socket, short c_id)
+void Disconnect()
 {
-	for (auto& pl : clients) {
-		if (pl.second._id == c_id) continue;
-		SC_REMOVE_PLAYER_PACKET p;
-		p.id = c_id;
-		p.size = sizeof(p);
-		p.type = SC_REMOVE_PLAYER;
-		send_remove_packet(c_socket, c_id);
+	for (int i = 0; i < MAX_USER; ++i) {
+		cout << " ID : " << i << " Delete ! " << endl;
+		closesocket(clients[i]._c_socket);
 	}
-	closesocket(clients[c_id]._c_socket);
+
+
+	
 }
 
 bool IsCollision_PE(Enemy en, Player pl)

@@ -5,6 +5,7 @@ constexpr char CS_MOVE = 1;
 constexpr char CS_MOUSECLICK = 13;
 constexpr char CS_DIRECTION = 15;
 constexpr char CS_KEYBOARD = 16;
+constexpr char CS_PLAYER_DEAD = 20;
 
 constexpr char SC_LOGININFO = 2;
 constexpr char SC_ADD_PLAYER = 3;
@@ -25,6 +26,8 @@ constexpr char SC_PILLAR = 19;
 constexpr int PORT_NUM = 9000;
 constexpr int BUF_SIZE = 1024;
 constexpr int NAMESIZE = 20;
+
+constexpr int MAX_USER = 3;
 
 #define MAX_BULLET_NUM 60
 #define MAX_ENEMY_NUM 20
@@ -64,6 +67,12 @@ struct CS_DIRECTION_PACKET {
 	float	dx;
 	float	dz;
 	float	degree;
+};
+
+struct CS_DEAD_PACKET {
+	char	size;
+	char	type;
+	bool	state;
 };
 
 struct SC_LOGININFO_PACKET {
