@@ -751,7 +751,7 @@ GLvoid drawScene()
 			glm::mat4 S_enemy = glm::mat4(1.0f);
 
 			T_enemy = glm::translate(T_enemy, enemy[i].t);
-			S_enemy = glm::scale(S_enemy, enemy[i].s);
+			S_enemy = glm::scale(S_enemy, { 0.5f, 0.5f ,0.5f });
 
 			all = T_enemy * S_enemy;
 			glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(all));
@@ -1361,7 +1361,9 @@ int main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	NetInit();
 	HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)do_recv, (LPVOID)NULL, 0, NULL);
 
-	while (!GetGameState());
+	while (!GetGameState()) {
+		Sleep(10);
+	};
 	RecvEnemyInfo();
 
 	glutInit(&argc, argv);
