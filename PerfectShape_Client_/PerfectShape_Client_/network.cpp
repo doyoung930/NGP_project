@@ -265,6 +265,12 @@ DWORD WINAPI do_recv()
                         }
                     }
                 }
+                // ¼öÁ¤
+                for (int i = 0; i < 3; i++){
+                    player[i].hp = 3;
+                    player[i].is_active = true;
+                }
+
                 break;
             }
             case SC_PLAYERHIT: {
@@ -295,6 +301,7 @@ DWORD WINAPI do_recv()
                 pillar_y = packet->y;
                 break;
             }
+
             }
             ptr += size;
         }

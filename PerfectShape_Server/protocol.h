@@ -170,3 +170,9 @@ struct SC_PILLAR_PACKET {
 	int id;
 	float y;
 };
+
+struct SC_HP_PACKET {
+	unsigned char size;
+	char type;
+	int hp;
+};

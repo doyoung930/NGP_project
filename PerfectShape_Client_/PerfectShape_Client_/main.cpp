@@ -358,6 +358,7 @@ void InitVariable()
 
 	map.clear_num = 0;
 }
+
 GLvoid drawScene()
 {
 	glViewport(0, 0, 900, 900);
@@ -401,6 +402,7 @@ GLvoid drawScene()
 	projection = glm::perspective(glm::radians(60.0f), 1.0f, 0.1f, 80.0f);
 	projection = glm::translate(projection, glm::vec3(0.0, 0.0, 0.0));
 	glUniformMatrix4fv(projectionLocation, 1, GL_FALSE, &projection[0][0]);
+
 	// ---------------모델 행렬들-------------------
 	glm::mat4 all = glm::mat4(1.0f);
 	glm::mat4 S_field = glm::mat4(1.0f);
@@ -410,9 +412,11 @@ GLvoid drawScene()
 	S_field = scale(S_field, map.s);
 	S_pillar = scale(S_pillar, map.pillar_s);
 	S_rooms = scale(S_rooms, map.rooms_s);
+
 	//--------------------그리기---------------------
 	glUniform3f(objColorLocation, 0.3, 0.3, 0.3);
 	glUniform1f(FragKindLocation, 1.0f);
+
 	//중간 방 바닥,천장
 	glFrontFace(GL_CW);
 	glm::mat4 T_field = glm::mat4(1.0f);
@@ -478,28 +482,28 @@ GLvoid drawScene()
 		
 	}
 	int check_player_hp = 0;
+
 	for (int i = 0; i < MAX_USER; ++i) {
 		if (NPlayers[i].hp <= 0) {
 			check_player_hp++;
 		}
-		else
-		{
+		else {
 			check_player_hp = 0;
 		}
 	}
 	if (check_player_hp == 3) {
-
 		PostQuitMessage(0);
 		send_dead_packet();
 		NetCleanup();
 	}
+
 	{
 		// 가짜 방들
 		glFrontFace(GL_CW);
 		glUniform3f(lightColorLocation, 0.2, 0.2, 0.2);
 		glUniform3f(objColorLocation, 0.2, 0.2, 0.2);
-		for (int i = 0; i < 4; i++)
-		{
+
+		for (int i = 0; i < 4; i++){
 			T_field = glm::mat4(1.0f);
 			T_field = translate(T_field, map.rooms_t[i]);
 			all = T_field * S_rooms;
@@ -516,6 +520,7 @@ GLvoid drawScene()
 			if (i != 1) glDrawArrays(GL_TRIANGLES, 12, 6);
 			if (i != 0) glDrawArrays(GL_TRIANGLES, 18, 6);
 		}
+
 		glFrontFace(GL_CCW);
 		// 총알
 		glUniform3f(objColorLocation, 1.0, 1.0, 0.0);
@@ -580,8 +585,7 @@ GLvoid drawScene()
 			glEnable(GL_BLEND);
 			glBindTexture(GL_TEXTURE_2D, Texture_Particle);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			for (int j = 0; j < 3; j++)
-			{
+			for (int j = 0; j < 3; j++){
 				if (enemy[i].particle_pop[j])
 				{
 					for (int k = 0; k < 30; k++)
@@ -636,6 +640,7 @@ GLvoid drawScene()
 		glUniform3f(objColorLocation, 1.0f, 0.0f, 0.0f);
 		GenShpere(hp_qobj, 1, 0.07, 5);
 	}
+
 	// 팀원 체력
 	int otherID[2] = {};
 
@@ -683,6 +688,7 @@ GLvoid drawScene()
 		glUniform3f(objColorLocation, 1.0f, 0.0f, 0.0f);
 		GenShpere(hp_qobj, 1, 0.07, 5);
 	}
+
 	//-----------------------//
 	glViewport(width - width / 5 - 10, height - height / 5 - 10, height / 5, height / 5);
 	glUniform1f(FragKindLocation, 0.0f);
@@ -705,6 +711,7 @@ GLvoid drawScene()
 	glDrawArrays(GL_TRIANGLES, 30, 6);
 
 	glUniform3f(objColorLocation, 1.0, 1.0, 0.0);
+
 	for (int i = 0; i < 3; ++i) {
 		if (NPlayers[i].hp < 1) continue;
 		if (i == 0) {

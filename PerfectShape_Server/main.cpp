@@ -12,6 +12,7 @@ std::uniform_int_distribution<> dist(-200, 200);
 
 // 오류검사
 int ret;
+
 void err_display(const char* msg)
 {
 	LPVOID lpMsgBuf;
@@ -213,15 +214,17 @@ int main()
 			}
 			else if(map.wave == true){
 				cnt++;
-				if(cnt == 20){
+				if (cnt == 20) {
 					map.wave = false;
 					map.random_door = abs(dist(gen)) % 4;
 					map.open[map.random_door] = 1;
 					if (map.clear_num < 19) {
 						map.clear_num++;
 					}
-					for(auto& pl : clients)
+					for (auto& pl : clients) {
+						pl.second.hp = 3;
 						send_stage_packet(&pl.second._c_socket, map.open[map.random_door]);
+					}
 				}
 			}
 		}
@@ -258,6 +261,7 @@ int main()
 
 			if (cnt == thread_count && map.open[map.random_door] != -1) {
 				map.open[map.random_door] = -1;
+				
 				for (auto& pl : clients)
 					send_stage_packet(&pl.second._c_socket, map.open[map.random_door]);
 			}
@@ -713,6 +717,7 @@ void send_pillar_packet(SOCKET* c_socket,short pillar_id)
 	send(*c_socket, reinterpret_cast<char*>(&p), sizeof(p), 0);
 }
 
+
 void gameStart()
 {
 	cout << "GameStart!" << endl;
@@ -826,10 +831,7 @@ void Disconnect()
 	for (int i = 0; i < MAX_USER; ++i) {
 		cout << " ID : " << i << " Delete ! " << endl;
 		closesocket(clients[i]._c_socket);
-	}
-
-
-	
+	}	
 }
 
 bool IsCollision_PE(Enemy en, Player pl)
