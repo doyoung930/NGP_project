@@ -265,7 +265,7 @@ DWORD WINAPI do_recv()
                         }
                     }
                 }
-                // ¼öÁ¤
+
                 for (int i = 0; i < 3; i++){
                     player[i].hp = 3;
                     player[i].is_active = true;

@@ -157,7 +157,6 @@ struct SC_HITEND_PACKET {
 	int id;
 };
 
-
 struct SC_PLAYER_DEAD_PACKET {
 	unsigned char size;
 	char type;
@@ -171,8 +170,4 @@ struct SC_PILLAR_PACKET {
 	float y;
 };
 
-struct SC_HP_PACKET {
-	unsigned char size;
-	char type;
-	int hp;
-};
+
