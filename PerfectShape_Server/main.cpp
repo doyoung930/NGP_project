@@ -102,9 +102,6 @@ int main()
 	INT addr_size;
 
 	SOCKET c_socket;
-	WSABUF rWsaBuf;
-	WSABUF sWsaBuf;
-	bool shutdown = false;
 
 	ZeroMemory(&server_addr, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
@@ -170,13 +167,10 @@ int main()
 
 		send_login_packet(&clients[thread_count]._c_socket, clients[thread_count]._id);
 
-		// 쓰레드 만들면 주석 해제
 		hThread = CreateThread(NULL, 0, Receive_Client_Packet, (LPVOID)player, 0, NULL);
 		if (hThread == NULL) { closesocket(clients[thread_count]._c_socket); }
 		else { CloseHandle(hThread); }
 		thread_count++;
-
-		//break;
 	}
 
 	for (int i = 0; i < thread_count; ++i) {
@@ -196,9 +190,9 @@ int main()
 	hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)SendAll, 0, 0, NULL);
 	if (hThread == NULL) { cout << "Send All 쓰레드 생성 에러" << endl; }
 
-	// SetEvent
 	// 메인 루프
 	while (true) {
+		// SetEvent
 		DWORD retval = WaitForSingleObject(_hCalculateEvent, INFINITE);
 		//클라 위치 업데이트
 		for (auto& pl : clients) {
@@ -420,10 +414,10 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 		// 데이터를 받는다
 		ZeroMemory(buf, sizeof(buf));
 		ret = recv(plclient->_c_socket, buf, sizeof(buf), 0);
-		/*if (ret == SOCKET_ERROR) {
+		if (ret == SOCKET_ERROR) {
 			err_display("recv()");
 			return 0;
-		}*/
+		}
 
 		char* p = buf;
 
@@ -436,11 +430,6 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 			// 데이터를 분석한다
 			switch (type)
 			{
-			case CS_LOGIN:
-			{
-				// 로그인 됐을 때 할일 처리
-				break;
-			}
 			case CS_KEYBOARD:
 			{
 				// 클라 키보드 입력
@@ -490,16 +479,6 @@ DWORD WINAPI Receive_Client_Packet(LPVOID player)
 				clients[pid].view_degree = packet->degree;
 				//cout << packet->id << "|" << packet->dx << " | " << packet->dz << " | " 
 				//	<< clients[pid].view_degree << endl;
-				break;
-			}
-			case CS_MOVE:
-			{
-				//이제 없어도 됨
-				CS_MOVE_PACKET* packet = reinterpret_cast<CS_MOVE_PACKET*>(p);
-				int pid = packet->id;
-				clients[pid].x = packet->x;
-				clients[pid].z = packet->z;
-				//cout << packet->id << "|" << packet->x << " | " << packet->z << endl;
 				break;
 			}
 			case CS_MOUSECLICK:

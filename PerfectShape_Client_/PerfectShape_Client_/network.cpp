@@ -63,11 +63,14 @@ Bullet bullets[MAX_BULLET_NUM];
 
 Enemy enemy[MAX_ENEMY_NUM];
 
-const char* SERVERIP = "127.0.0.1"; // 임시
+std::string SERVERIP;
 
 int NetInit() 
 {
     int retval;
+    
+    std::cout << "IP 주소를 입력하세요 : ";
+    std::cin >> SERVERIP;
 
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
         return 1;
@@ -78,7 +81,7 @@ int NetInit()
     memset(&serveraddr, 0, sizeof(serveraddr));
     serveraddr.sin_family = AF_INET;
     serveraddr.sin_port = htons(PORT_NUM);
-    inet_pton(AF_INET, SERVERIP, &serveraddr.sin_addr);
+    inet_pton(AF_INET, SERVERIP.data(), &serveraddr.sin_addr);
 
     retval = connect(sock, (struct sockaddr*)&serveraddr, sizeof(serveraddr));
 
@@ -93,22 +96,6 @@ void NetCleanup()
     WSACleanup();
 }
 
-int send_move_packet(float x, float z)
-{
-    int retval = 0;
-
-    CS_MOVE_PACKET p{};
-    p.size = sizeof(CS_MOVE_PACKET);
-    p.id = MyID;
-    p.type = CS_MOVE;
-    p.x = x;
-    p.z = z;
-    //std::cout << x << " " << z << " " << std::endl;
-    send(sock, reinterpret_cast<const char*>(&p), sizeof(p), 0);
-    
-    return retval;
-}
-
 int send_keyboard_packet(int direction)
 {
     int retval = 0;
@@ -118,7 +105,6 @@ int send_keyboard_packet(int direction)
     p.id = MyID;
     p.type = CS_KEYBOARD;
     p.direction = direction;
-    //std::cout << x << " " << z << " " << std::endl;
     send(sock, reinterpret_cast<const char*>(&p), sizeof(p), 0);
 
     return retval;
@@ -135,7 +121,6 @@ int send_direction_packet(float dx, float dz,float degree)
     p.dx = dx;
     p.dz = dz;
     p.degree = degree;
-    //std::cout << x << " " << z << " " << std::endl;
     send(sock, reinterpret_cast<const char*>(&p), sizeof(p), 0);
 
     return retval;
@@ -169,8 +154,6 @@ int send_dead_packet()
     p.type = CS_PLAYER_DEAD;
     p.state = false;
 
-    retval = send(sock, reinterpret_cast<const char*>(&p), sizeof(CS_DEAD_PACKET), 0);
-    std::cout << "Dead 패킷 보냄" << std::endl;
     return retval;
 }
 
@@ -182,7 +165,7 @@ DWORD WINAPI do_recv()
     while (true) {
         ZeroMemory(recvBuf, BUF_SIZE);
         retval = recv(sock, recvBuf, BUF_SIZE, 0);
-        //if (retval == SOCKET_ERROR) err_display("RECV()");
+        if (retval == SOCKET_ERROR) err_display("RECV()");
         char* ptr = recvBuf;
 
         while (ptr != NULL) {
@@ -198,7 +181,6 @@ DWORD WINAPI do_recv()
                 SC_LOGININFO_PACKET* packet = reinterpret_cast<SC_LOGININFO_PACKET*>(ptr);
                 
                 MyID = packet->id;
-                //printf("%d ", packet->type);
                 break;
             }
             case SC_ADD_PLAYER: {
@@ -209,7 +191,6 @@ DWORD WINAPI do_recv()
             case SC_START: {
                 SC_START_PACKET* packet = reinterpret_cast<SC_START_PACKET*>(ptr);
                 gameStart = true;
-                //printf("%d ", packet->type);
                 break;
             }
             case SC_REMOVE_PLAYER: {
@@ -221,7 +202,6 @@ DWORD WINAPI do_recv()
                 short id = packet->id;
                 player[id].x = packet->x;
                 player[id].z = packet->z;
-                //std::cout << player[id].id << " | " << player[id].x << " | " << player[id].z << std::endl;
                 break;
             }
             case SC_GEN_ENEMY: {
@@ -237,7 +217,6 @@ DWORD WINAPI do_recv()
                 if (enemy[id].kind > 4) enemy[id].s = 0.4f;
                 else enemy[id].s = (float)enemy[id].hp * 0.25f;
 
-                //std::cout << id << " | " << enemy[id].x << " | " << enemy[id].z << std::endl;
                 break;
             }
             case SC_ENEMY: {
@@ -245,13 +224,11 @@ DWORD WINAPI do_recv()
                 short id = packet->id;
                 enemy[id].x = packet->x;
                 enemy[id].z = packet->z;
-                //std::cout << id << " | " << enemy[id].x << " | " << enemy[id].z << std::endl;
                 break;
             }
             case SC_ENEMYHIT: {
                 SC_ENEMYHIT_PACKET* packet = reinterpret_cast<SC_ENEMYHIT_PACKET*>(ptr);
                 short id = packet->id;
-                //std::cout << id << " | " << enemy[id].hp << std::endl;
                 enemy[id].hp -= 1;
                 enemy[id].pop[enemy[id].hp] = true;
                 if (enemy[id].hp == 0) {
@@ -288,7 +265,6 @@ DWORD WINAPI do_recv()
                         }
                     }
                 }
-                //std::cout << "asdasd" << std::endl;
                 break;
             }
             case SC_PLAYERHIT: {
@@ -317,7 +293,6 @@ DWORD WINAPI do_recv()
                 SC_PILLAR_PACKET* packet = reinterpret_cast<SC_PILLAR_PACKET*>(ptr);
                 pillarID = packet->id;
                 pillar_y = packet->y;
-                //std::cout << pillarID << " " << pillar_y << std::endl;
                 break;
             }
             }

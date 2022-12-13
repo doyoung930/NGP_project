@@ -1,7 +1,5 @@
 #pragma once
 //Packet ID
-constexpr char CS_LOGIN = 0;
-constexpr char CS_MOVE = 1;
 constexpr char CS_MOUSECLICK = 13;
 constexpr char CS_DIRECTION = 15;
 constexpr char CS_KEYBOARD = 16;

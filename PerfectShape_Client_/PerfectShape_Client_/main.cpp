@@ -803,7 +803,6 @@ GLvoid TimerFunction(int value)
 	double time = double(end - start) / CLOCKS_PER_SEC;
 	if (time > 0.01f) {
 		start = clock();
-		//send_move_packet(player.t.x, player.t.z);
 		send_direction_packet(view_control.Direction.x, view_control.Direction.z, view_control.LR);
 	}
 	glutPostRedisplay();
