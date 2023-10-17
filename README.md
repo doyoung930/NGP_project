@@ -1,6 +1,6 @@
 # NGP_project
 
-개발 환경
+# 개발 환경
 -	OS : Windows 10
 -	IDE : Visual Studio 2019
 -	API : Win32 API / Windows Socket API
@@ -8,12 +8,12 @@
 -	언어 : C / C++ (Open GL)
 
 
-게임 개요
+# 게임 개요
 - 게임제목:  Perfect Shape
 - 게임컨셉: 플레이어3명에서 캐릭터를 조종하여 적을 쓰러트리며 다음 방으로 진행하며 지속적으로 살아남는 1인칭 슈팅게임
 ![image](https://github.com/doyoung930/NGP_project/assets/70666642/3bcc54b7-7b3e-41ae-91ea-b4ca7dca51a5)
 
-게임플레이
+# 게임플레이
 - WSAD(상하좌우) 키보드를 통해 입력을 받아 플레이어를 움직일 수 있음.
 - 마우스 왼쪽 커서를 통해 적을 공격
 - 적에게 충돌하거나 적의 총알에 충돌할 경우 데미지를 입음.
@@ -22,18 +22,22 @@
 	2. 모든 적 처치
 	3. 다음 방 이동 (다음 스테이지 시작)
 
-Level Design
+# Level Design
 
 -high level Design
+
 ![image](https://github.com/doyoung930/NGP_project/assets/70666642/b51f4c99-c58c-442e-a0ee-b22ff5f4fc08)
 
+
 -Login Flow chart
+
 ![image](https://github.com/doyoung930/NGP_project/assets/70666642/bbf03357-1415-49dc-beb6-41038447f4a9)
 
 -Game Flow chart
+
 ![image](https://github.com/doyoung930/NGP_project/assets/70666642/042d9090-94fb-4fcd-92bf-deafbe963436)
 
-개인별 역할분담
+# 개인별 역할분담
 1. 이도영
 -	일정 조율 및 문서 작성
 -	void send_login_packet() : 클라이언트가 접속하면 접속확인과 id를 보내는 함수
