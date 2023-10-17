@@ -38,9 +38,9 @@
 
  <img src="https://github.com/doyoung930/NGP_project/assets/70666642/042d9090-94fb-4fcd-92bf-deafbe963436" width="200" height="400"/>
 
-# 개인별 역할분담
+ # 개인별 역할분담
 
-1. 이도영
+ 1. 이도영
 -	일정 조율 및 문서 작성
 -	void send_login_packet() : 클라이언트가 접속하면 접속확인과 id를 보내는 함수
 -	void send_add_packet() : 다른 클라이언트의 접속 전송 함수
