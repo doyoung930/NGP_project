@@ -14,6 +14,7 @@
 
 <img src="https://github.com/doyoung930/NGP_project/assets/70666642/3bcc54b7-7b3e-41ae-91ea-b4ca7dca51a5" width="400" height="400"/>
 
+
 # 게임플레이
 - WSAD(상하좌우) 키보드를 통해 입력을 받아 플레이어를 움직일 수 있음.
 - 마우스 왼쪽 커서를 통해 적을 공격
@@ -27,15 +28,15 @@
 
 -high level Design
 
-<img src="https://github.com/doyoung930/NGP_project/assets/70666642/b51f4c99-c58c-442e-a0ee-b22ff5f4fc08" width="200" height="400"/>
+ <img src="https://github.com/doyoung930/NGP_project/assets/70666642/b51f4c99-c58c-442e-a0ee-b22ff5f4fc08" width="200" height="400"/>
 
 -Login Flow chart
 
-<img src="https://github.com/doyoung930/NGP_project/assets/70666642/bbf03357-1415-49dc-beb6-41038447f4a9" width="200" height="400"/>
+ <img src="https://github.com/doyoung930/NGP_project/assets/70666642/bbf03357-1415-49dc-beb6-41038447f4a9" width="200" height="400"/>
 
 -Game Flow chart
 
-<img src="https://github.com/doyoung930/NGP_project/assets/70666642/042d9090-94fb-4fcd-92bf-deafbe963436" width="200" height="400"/>
+ <img src="https://github.com/doyoung930/NGP_project/assets/70666642/042d9090-94fb-4fcd-92bf-deafbe963436" width="200" height="400"/>
 # 개인별 역할분담
 1. 이도영
 -	일정 조율 및 문서 작성
