@@ -33,11 +33,11 @@
 
 -Login Flow chart
 
- <img src="https://github.com/doyoung930/NGP_project/assets/70666642/9b86d146-bc91-4515-8ed7-0f8861653632" width="200" height="400"/>
+ <img src="https://github.com/doyoung930/NGP_project/assets/70666642/9b86d146-bc91-4515-8ed7-0f8861653632" width="300" height="400"/>
 
 -Game Flow chart
 
- <img src="https://github.com/doyoung930/NGP_project/assets/70666642/ede20f89-8ed7-449f-8baf-bd0ebe71a221" width="200" height="400"/>
+ <img src="https://github.com/doyoung930/NGP_project/assets/70666642/ede20f89-8ed7-449f-8baf-bd0ebe71a221" width="300" height="400"/>
 
  # 개인별 역할분담
 
