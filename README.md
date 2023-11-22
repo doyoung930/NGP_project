@@ -12,7 +12,8 @@
 - 게임제목:  Perfect Shape
 - 게임컨셉: 플레이어3명에서 캐릭터를 조종하여 적을 쓰러트리며 다음 방으로 진행하며 지속적으로 살아남는 1인칭 슈팅게임
 
-<img src="https://github.com/doyoung930/NGP_project/assets/70666642/3bcc54b7-7b3e-41ae-91ea-b4ca7dca51a5" width="400" height="400"/>
+<img src="https://github.com/doyoung930/NGP_project/assets/70666642/3006b1b9-f829-4b4f-b39c-74b164c99924" width="400" height="400"/>
+
 
 
 # 게임플레이
@@ -28,15 +29,15 @@
 
 -high level Design
 
- <img src="https://github.com/doyoung930/NGP_project/assets/70666642/b51f4c99-c58c-442e-a0ee-b22ff5f4fc08" width="200" height="400"/>
+ <img src="https://github.com/doyoung930/NGP_project/assets/70666642/2821e5e5-6bd5-4f89-b663-a3568d7a5c15" width="200" height="400"/>
 
 -Login Flow chart
 
- <img src="https://github.com/doyoung930/NGP_project/assets/70666642/bbf03357-1415-49dc-beb6-41038447f4a9" width="200" height="400"/>
+ <img src="https://github.com/doyoung930/NGP_project/assets/70666642/9b86d146-bc91-4515-8ed7-0f8861653632" width="200" height="400"/>
 
 -Game Flow chart
 
- <img src="https://github.com/doyoung930/NGP_project/assets/70666642/042d9090-94fb-4fcd-92bf-deafbe963436" width="200" height="400"/>
+ <img src="https://github.com/doyoung930/NGP_project/assets/70666642/ede20f89-8ed7-449f-8baf-bd0ebe71a221" width="200" height="400"/>
 
  # 개인별 역할분담
 
